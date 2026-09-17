@@ -1,12 +1,15 @@
 import { ShoppingBag } from 'lucide-react'
+import { useLocale } from '../../hooks/useLocale'
 import EmptyState from '../common/EmptyState'
 
 export default function EmptyCart() {
+  const { t } = useLocale()
+
   return (
     <EmptyState
-      title="سلتك فارغة"
-      description="أضف أدوات المطبخ من المعرض ثم عد لإرسال طلبك عبر واتساب."
-      actionLabel="تصفح المنتجات"
+      title={t('cart.emptyTitle')}
+      description={t('cart.emptyDescription')}
+      actionLabel={t('home.browseProducts')}
       actionTo="/products"
       icon={<ShoppingBag size={40} />}
     />

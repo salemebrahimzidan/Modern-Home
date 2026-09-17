@@ -1,5 +1,6 @@
 import { X } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
+import { useLocale } from '../../hooks/useLocale'
 
 interface ModalProps {
   open: boolean
@@ -9,6 +10,8 @@ interface ModalProps {
 }
 
 export default function Modal({ open, title, onClose, children }: ModalProps) {
+  const { t } = useLocale()
+
   useEffect(() => {
     if (!open) return
     const onKey = (event: KeyboardEvent) => {
@@ -29,7 +32,7 @@ export default function Modal({ open, title, onClose, children }: ModalProps) {
       <button
         type="button"
         className="absolute inset-0 bg-ink/40"
-        aria-label="إغلاق النافذة"
+        aria-label={t('common.closeDialog')}
         onClick={onClose}
       />
       <div
@@ -44,7 +47,7 @@ export default function Modal({ open, title, onClose, children }: ModalProps) {
             type="button"
             onClick={onClose}
             className="rounded-lg p-2 hover:bg-mist"
-            aria-label="إغلاق"
+            aria-label={t('common.close')}
           >
             <X size={18} />
           </button>

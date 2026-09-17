@@ -23,12 +23,16 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 html,
 body,
 #root {
   min-height: 100%;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 body {
@@ -38,6 +42,29 @@ body {
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+img,
+video,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+iframe {
+  max-width: 100%;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+li,
+dd,
+dt {
+  overflow-wrap: break-word;
 }
 
 ::selection {
@@ -51,8 +78,11 @@ body {
 }
 
 img {
-  max-width: 100%;
   display: block;
+}
+
+.safe-bottom {
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
 }
 
 @keyframes fade-up {

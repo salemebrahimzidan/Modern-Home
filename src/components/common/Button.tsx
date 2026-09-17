@@ -37,7 +37,7 @@ export default function Button({
     <button
       type={type}
       className={[
-        'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex min-w-0 max-w-full items-center justify-center gap-2 rounded-xl font-medium transition disabled:cursor-not-allowed disabled:opacity-50',
         variants[variant],
         sizes[size],
         fullWidth ? 'w-full' : '',

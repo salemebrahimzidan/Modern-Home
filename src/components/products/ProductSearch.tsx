@@ -1,5 +1,6 @@
 import { Search } from 'lucide-react'
 import type { FormEvent } from 'react'
+import { useLocale } from '../../hooks/useLocale'
 
 interface ProductSearchProps {
   value: string
@@ -8,6 +9,8 @@ interface ProductSearchProps {
 }
 
 export default function ProductSearch({ value, onChange, onSubmit }: ProductSearchProps) {
+  const { t } = useLocale()
+
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
     onSubmit?.()
@@ -23,8 +26,8 @@ export default function ProductSearch({ value, onChange, onSubmit }: ProductSear
         type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="ابحث بالاسم أو القسم أو الوصف..."
-        aria-label="بحث المنتجات"
+        placeholder={t('common.searchCatalogPlaceholder')}
+        aria-label={t('common.searchProducts')}
         className="w-full rounded-xl border border-mist bg-surface py-2.5 pe-3 ps-10 text-sm outline-none focus:border-accent"
       />
     </form>
