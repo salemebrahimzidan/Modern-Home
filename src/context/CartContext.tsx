@@ -6,6 +6,8 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { useLocale } from '../hooks/useLocale'
+import { resolveProductFromCatalog } from '../services/catalog'
 import type { CartItem } from '../types/cart'
 import type { Product } from '../types/product'
 import { getStorageItem, setStorageItem } from '../utils/storage'
@@ -38,14 +40,19 @@ function normalizeCart(items: CartItem[]): CartItem[] {
         typeof item.quantity === 'number' &&
         item.quantity > 0,
     )
-    .map((item) => ({
-      product: item.product,
-      quantity: Math.min(item.quantity, Math.max(item.product.stock, 1)),
-    }))
+    .map((item) => {
+      const fresh = resolveProductFromCatalog(item.product.id)
+      const product = fresh ?? item.product
+      return {
+        product,
+        quantity: Math.min(item.quantity, Math.max(product.stock, 1)),
+      }
+    })
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const { showToast } = useToast()
+  const { t } = useLocale()
   const [items, setItems] = useState<CartItem[]>(() =>
     normalizeCart(getStorageItem<CartItem[]>(CART_STORAGE_KEY, [])),
   )
@@ -57,7 +64,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addToCart = useCallback(
     (product: Product, quantity = 1) => {
       if (product.stock <= 0) {
-        showToast('هذا المنتج غير متوفر حالياً', 'error')
+        showToast(t('cart.unavailable'), 'error')
         return
       }
 
@@ -71,17 +78,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
         return [...current, { product, quantity: Math.min(quantity, product.stock) }]
       })
-      showToast('تمت إضافة المنتج إلى السلة')
+      showToast(t('cart.added'))
     },
-    [showToast],
+    [showToast, t],
   )
 
   const removeFromCart = useCallback(
     (productId: number) => {
       setItems((current) => current.filter((item) => item.product.id !== productId))
-      showToast('تم حذف المنتج من السلة', 'info')
+      showToast(t('cart.removed'), 'info')
     },
-    [showToast],
+    [showToast, t],
   )
 
   const updateQuantity = useCallback((productId: number, quantity: number) => {

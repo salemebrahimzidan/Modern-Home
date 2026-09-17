@@ -1,14 +1,16 @@
 import EmptyState from '../components/common/EmptyState'
+import { useLocale } from '../hooks/useLocale'
 import { usePageSeo } from '../hooks/usePageSeo'
 
 export default function NotFound() {
-  usePageSeo('الصفحة غير موجودة')
+  const { t } = useLocale()
+  usePageSeo(t('notFound.seoTitle'))
 
   return (
     <EmptyState
-      title="الصفحة غير موجودة"
-      description="عذراً، لم نتمكن من العثور على الصفحة التي تبحث عنها."
-      actionLabel="العودة للرئيسية"
+      title={t('notFound.title')}
+      description={t('notFound.description')}
+      actionLabel={t('notFound.home')}
       actionTo="/"
     />
   )

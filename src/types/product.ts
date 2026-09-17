@@ -1,8 +1,15 @@
+import type { LocalizedText } from '../i18n/types'
+
+export interface ProductSpec {
+  label: LocalizedText
+  value: LocalizedText
+}
+
 export interface Product {
   id: number
-  name: string
+  name: LocalizedText
   slug: string
-  description: string
+  description: LocalizedText
   price: number
   oldPrice?: number
   categoryId: number
@@ -17,7 +24,7 @@ export interface Product {
   reviewsCount?: number
   colors?: string[]
   sizes?: string[]
-  specifications?: Record<string, string>
+  specifications?: ProductSpec[]
 }
 
 export type ProductSortOption =

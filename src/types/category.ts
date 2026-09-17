@@ -1,7 +1,9 @@
+import type { LocalizedText } from '../i18n/types'
+
 export interface Category {
   id: number
-  name: string
+  name: LocalizedText
   slug: string
   image: string
-  description?: string
+  description?: LocalizedText
 }

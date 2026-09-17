@@ -7,10 +7,13 @@ import OffersSection from '../components/home/OffersSection'
 import WhatsAppCta from '../components/home/WhatsAppCta'
 import WhyUs from '../components/home/WhyUs'
 import { storeConfig } from '../config/store'
+import { useLocale } from '../hooks/useLocale'
 import { usePageSeo } from '../hooks/usePageSeo'
+import { localized } from '../i18n/types'
 
 export default function Home() {
-  usePageSeo('الرئيسية', storeConfig.description)
+  const { locale, t } = useLocale()
+  usePageSeo(t('home.seoTitle'), localized(storeConfig.description, locale))
 
   return (
     <>

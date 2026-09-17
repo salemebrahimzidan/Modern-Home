@@ -1,5 +1,8 @@
 import { categories } from '../data/categories'
 import { products } from '../data/products'
+import { translate } from '../i18n/translate'
+import type { Locale } from '../i18n/types'
+import { localized } from '../i18n/types'
 import type { Category } from '../types/category'
 import type { Product, ProductFilters, ProductSortOption } from '../types/product'
 
@@ -38,12 +41,32 @@ export function getCategoryBySlug(slug: string): Category | undefined {
   return categories.find((category) => category.slug === slug)
 }
 
-export function getCategoryName(categoryId: number): string {
-  return getCategoryById(categoryId)?.name ?? 'قسم غير معروف'
+export function getCategoryName(categoryId: number, locale: Locale = 'ar'): string {
+  const category = getCategoryById(categoryId)
+  if (!category) return translate(locale, 'common.unknownCategory')
+  return localized(category.name, locale)
 }
 
 export function getCategoryProductCount(categoryId: number): number {
   return products.filter((product) => product.categoryId === categoryId).length
+}
+
+function matchesSearch(product: Product, q: string): boolean {
+  const category = getCategoryById(product.categoryId)
+  const haystack = [
+    product.name.ar,
+    product.name.en,
+    product.description.ar,
+    product.description.en,
+    product.slug,
+    category?.name.ar,
+    category?.name.en,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  return haystack.includes(q)
 }
 
 export function filterAndSortProducts(
@@ -54,15 +77,7 @@ export function filterAndSortProducts(
 
   if (filters.search?.trim()) {
     const q = filters.search.trim().toLowerCase()
-    result = result.filter((product) => {
-      const categoryName = getCategoryName(product.categoryId).toLowerCase()
-      return (
-        product.name.toLowerCase().includes(q) ||
-        product.description.toLowerCase().includes(q) ||
-        product.slug.toLowerCase().includes(q) ||
-        categoryName.includes(q)
-      )
-    })
+    result = result.filter((product) => matchesSearch(product, q))
   }
 
   if (filters.categorySlug) {
@@ -141,4 +156,8 @@ export function getPriceBounds(allProducts: Product[] = products): {
   if (allProducts.length === 0) return { min: 0, max: 0 }
   const prices = allProducts.map((product) => product.price)
   return { min: Math.min(...prices), max: Math.max(...prices) }
+}
+
+export function resolveProductFromCatalog(productId: number): Product | undefined {
+  return products.find((product) => product.id === productId)
 }
