@@ -20,7 +20,7 @@ export default function ProductSearch({ value, onChange, onSubmit }: ProductSear
     <form onSubmit={handleSubmit} className="relative">
       <Search
         size={18}
-        className="pointer-events-none absolute top-1/2 start-3 -translate-y-1/2 text-muted"
+        className="pointer-events-none absolute top-1/2 start-3.5 -translate-y-1/2 text-accent"
       />
       <input
         type="search"
@@ -28,7 +28,7 @@ export default function ProductSearch({ value, onChange, onSubmit }: ProductSear
         onChange={(e) => onChange(e.target.value)}
         placeholder={t('common.searchCatalogPlaceholder')}
         aria-label={t('common.searchProducts')}
-        className="w-full rounded-xl border border-mist bg-surface py-2.5 pe-3 ps-10 text-sm outline-none focus:border-accent"
+        className="w-full rounded-2xl border border-mist bg-surface py-3 pe-4 ps-11 text-sm shadow-card outline-none placeholder:text-muted/80 focus:border-accent focus:ring-2 focus:ring-accent/15"
       />
     </form>
   )
