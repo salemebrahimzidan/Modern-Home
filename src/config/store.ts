@@ -13,8 +13,8 @@ export const storeConfig = {
     'معرض متخصص في أدوات ومستلزمات المطبخ: أواني طهي، أدوات تحضير، تخزين، خَبز وتقديم — جودة عملية وأسعار واضحة.',
     'A showroom specialized in kitchen tools and supplies: cookware, prep tools, storage, baking, and serving — practical quality and clear prices.',
   ),
-  whatsapp: '+201021747975',
-  phone: '01021747975',
+  whatsapp: '+201043327085',
+  phone: '01043327085',
   email: 'hello@modern-home.example',
   address: L('شارع المثال، القاهرة، مصر', 'Example Street, Cairo, Egypt'),
   openingHours: L(
@@ -23,6 +23,7 @@ export const storeConfig = {
   ),
   facebook: 'https://facebook.com',
   instagram: 'https://instagram.com',
+  tiktok: 'https://tiktok.com',
   currency: 'EGP',
   currencyLabel: L('ج.م', 'EGP'),
   mapEmbedUrl: '',

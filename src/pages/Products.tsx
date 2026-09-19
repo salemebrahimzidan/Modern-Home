@@ -208,7 +208,7 @@ export default function ProductsPage() {
 
 
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
+      <div className="grid gap-5 md:grid-cols-[minmax(0,250px)_minmax(0,1fr)]">
 
         <ProductFilters
 
