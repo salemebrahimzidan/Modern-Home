@@ -22,7 +22,7 @@ export const storeConfig = {
     'Sat – Thu: 10 AM – 10 PM',
   ),
   facebook: 'https://facebook.com',
-  instagram: 'https://instagram.com',
+  instagram: 'https://www.instagram.com/mo_de_rn_home/',
   tiktok: 'https://tiktok.com',
   currency: 'EGP',
   currencyLabel: L('ج.م', 'EGP'),

@@ -16,9 +16,9 @@ export default function Contact() {
         <img
           src={unsplashPhoto('photo-1556912173-46c336c7fd55', { width: 1800, height: 1000 })}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-l from-ink/94 via-[#2c1c14]/86 to-accent/35" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-l from-ink/94 via-[#2c1c14]/86 to-accent/35" />
         <div className="pointer-events-none absolute -end-16 -top-16 h-56 w-56 rounded-full bg-accent/25 blur-3xl" />
 
         <div className="relative w-full px-6 py-8 sm:px-10 sm:py-10 md:px-14 lg:px-16">
@@ -81,7 +81,8 @@ function IconLink({
     <a
       href={href}
       aria-label={label}
-      {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
+      className="inline-flex"
+      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
     >
       <BrandTile className={className}>{children}</BrandTile>
     </a>
