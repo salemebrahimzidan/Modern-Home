@@ -1,6 +1,28 @@
-import type { Product, ProductSpec } from '../types/product'
+import type { ProductSpec } from '../types/product'
 import type { LocalizedText } from '../i18n/types'
 import { unsplashPhoto } from '../utils/images'
+
+interface StaticProduct {
+  id: number
+  name: LocalizedText
+  slug: string
+  description: LocalizedText
+  price: number
+  oldPrice?: number
+  categoryId: number
+  image: string
+  images: string[]
+  discount?: number
+  featured: boolean
+  isNew: boolean
+  isBestSeller: boolean
+  stock: number
+  rating?: number
+  reviewsCount?: number
+  colors?: string[]
+  sizes?: string[]
+  specifications?: ProductSpec[]
+}
 
 const L = (ar: string, en: string): LocalizedText => ({ ar, en })
 
@@ -8,10 +30,10 @@ function photo(id: string): string {
   return unsplashPhoto(id, { width: 1000, height: 1200 })
 }
 
-function createProduct(
-  product: Omit<Product, 'images' | 'featured' | 'isNew' | 'isBestSeller' | 'stock'> &
-    Partial<Pick<Product, 'images' | 'featured' | 'isNew' | 'isBestSeller' | 'stock'>>,
-): Product {
+function createStaticProduct(
+  product: Omit<StaticProduct, 'images' | 'featured' | 'isNew' | 'isBestSeller' | 'stock'> &
+    Partial<Pick<StaticProduct, 'images' | 'featured' | 'isNew' | 'isBestSeller' | 'stock'>>,
+): StaticProduct {
   const images = product.images && product.images.length > 0 ? product.images : [product.image]
   const discount =
     product.discount ??
@@ -83,8 +105,8 @@ const cleaning = [
   photo('photo-1584622650111-993a426fbf0a'),
 ]
 
-export const products: Product[] = [
-  createProduct({
+export const products: StaticProduct[] = [
+  createStaticProduct({
     id: 1,
     name: L('طقم حلل استانلس', 'Stainless steel cookware set'),
     slug: 'stainless-steel-cookware-set',
@@ -108,7 +130,7 @@ export const products: Product[] = [
       ['الاستخدام', 'Use', 'غاز / فرن', 'Gas / oven'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 2,
     name: L('طقم حلل جرانيت', 'Granite cookware set'),
     slug: 'granite-cookware-set',
@@ -132,7 +154,7 @@ export const products: Product[] = [
       ['التنظيف', 'Cleaning', 'يدوي', 'Hand wash'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 3,
     name: L('طاسة جرانيت', 'Granite frying pan'),
     slug: 'granite-frying-pan',
@@ -156,7 +178,7 @@ export const products: Product[] = [
       ['المقبض', 'Handle', 'حراري', 'Heat-resistant'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 4,
     name: L('طاسة قلي', 'Frying pan'),
     slug: 'frying-pan',
@@ -178,7 +200,7 @@ export const products: Product[] = [
       ['الخامة', 'Material', 'ألومنيوم مطلي', 'Coated aluminum'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 5,
     name: L('حلة ضغط', 'Pressure cooker'),
     slug: 'pressure-cooker',
@@ -201,7 +223,7 @@ export const products: Product[] = [
       ['الأمان', 'Safety', 'صمام مزدوج', 'Dual valve'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 6,
     name: L('طقم حلل كامل', 'Complete cookware set'),
     slug: 'complete-cookware-set',
@@ -224,7 +246,7 @@ export const products: Product[] = [
       ['الاستخدام', 'Use', 'غاز', 'Gas'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 7,
     name: L('سكينة شيف', 'Chef knife'),
     slug: 'chef-knife',
@@ -248,7 +270,7 @@ export const products: Product[] = [
       ['المقبض', 'Handle', 'مريح مضاد للانزلاق', 'Comfortable non-slip'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 8,
     name: L('طقم سكاكين', 'Knife set'),
     slug: 'knife-set',
@@ -271,7 +293,7 @@ export const products: Product[] = [
       ['الخامة', 'Material', 'ستانلس', 'Stainless'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 9,
     name: L('لوح تقطيع', 'Cutting board'),
     slug: 'cutting-board',
@@ -292,7 +314,7 @@ export const products: Product[] = [
       ['المقاس', 'Size', '40×30 سم', '40×30 cm'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 10,
     name: L('مبشرة متعددة الاستخدام', 'Multi grater'),
     slug: 'multi-grater',
@@ -313,7 +335,7 @@ export const products: Product[] = [
       ['الخامة', 'Material', 'ستانلس', 'Stainless'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 11,
     name: L('مقشرة خضار', 'Vegetable peeler'),
     slug: 'vegetable-peeler',
@@ -334,7 +356,7 @@ export const products: Product[] = [
       ['المقبض', 'Handle', 'مطاطي', 'Rubber grip'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 12,
     name: L('طقم ملاعق طبخ', 'Cooking utensil set'),
     slug: 'cooking-utensil-set',
@@ -356,7 +378,7 @@ export const products: Product[] = [
       ['الخامة', 'Material', 'سيليكون / خشب', 'Silicone / wood'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 13,
     name: L('مغرفة شوربة', 'Soup ladle'),
     slug: 'soup-ladle',
@@ -376,7 +398,7 @@ export const products: Product[] = [
       ['الطول', 'Length', '32 سم', '32 cm'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 14,
     name: L('مصفاة استانلس', 'Stainless colander'),
     slug: 'stainless-colander',
@@ -398,7 +420,7 @@ export const products: Product[] = [
       ['القطر', 'Diameter', '24 سم', '24 cm'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 15,
     name: L('قطاعة خضار', 'Vegetable chopper'),
     slug: 'vegetable-chopper',
@@ -421,7 +443,7 @@ export const products: Product[] = [
       ['الخامة', 'Material', 'بلاستيك غذائي + ستانلس', 'Food-grade plastic + stainless'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 16,
     name: L('هراسة بطاطس', 'Potato masher'),
     slug: 'potato-masher',
@@ -441,7 +463,7 @@ export const products: Product[] = [
       ['المقبض', 'Handle', 'مريح', 'Comfortable'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 17,
     name: L('مضرب بيض', 'Whisk'),
     slug: 'whisk',
@@ -461,7 +483,7 @@ export const products: Product[] = [
       ['المقاس', 'Size', 'وسط', 'Medium'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 18,
     name: L('طقم أكواب قياس', 'Measuring cups set'),
     slug: 'measuring-cups-set',
@@ -484,7 +506,7 @@ export const products: Product[] = [
       ['الخامة', 'Material', 'بلاستيك متين', 'Durable plastic'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 19,
     name: L('طقم علب حفظ الطعام', 'Food storage containers'),
     slug: 'food-storage-containers',
@@ -508,7 +530,7 @@ export const products: Product[] = [
       ['الاستخدام', 'Use', 'ثلاجة / دولاب', 'Fridge / cupboard'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 20,
     name: L('برطمانات توابل', 'Spice jars'),
     slug: 'spice-jars',
@@ -530,7 +552,7 @@ export const products: Product[] = [
       ['الخامة', 'Material', 'زجاج + حامل معدني', 'Glass + metal stand'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 21,
     name: L('منظم أدراج المطبخ', 'Kitchen drawer organizer'),
     slug: 'kitchen-drawer-organizer',
@@ -551,7 +573,7 @@ export const products: Product[] = [
       ['التعديل', 'Adjustable', 'قابل للتوسيع', 'Expandable'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 22,
     name: L('منظم الثلاجة', 'Refrigerator organizer'),
     slug: 'refrigerator-organizer',
@@ -573,7 +595,7 @@ export const products: Product[] = [
       ['الخامة', 'Material', 'بلاستيك شفاف', 'Clear plastic'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 23,
     name: L('صينية فرن', 'Baking tray'),
     slug: 'baking-tray',
@@ -595,7 +617,7 @@ export const products: Product[] = [
       ['الطلاء', 'Coating', 'غير لاصق', 'Non-stick'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 24,
     name: L('قالب كيك', 'Cake mold'),
     slug: 'cake-mold',
@@ -616,7 +638,7 @@ export const products: Product[] = [
       ['الخامة', 'Material', 'معدن غير لاصق', 'Non-stick metal'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 25,
     name: L('قالب سيليكون', 'Silicone mold'),
     slug: 'silicone-mold',
@@ -638,7 +660,7 @@ export const products: Product[] = [
       ['التجاويف', 'Cavities', '12', '12'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 26,
     name: L('شوبك', 'Rolling pin'),
     slug: 'rolling-pin',
@@ -658,7 +680,7 @@ export const products: Product[] = [
       ['الطول', 'Length', '40 سم', '40 cm'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 27,
     name: L('طقم أكواب', 'Cups set'),
     slug: 'cups-set',
@@ -680,7 +702,7 @@ export const products: Product[] = [
       ['الخامة', 'Material', 'خزف', 'Ceramic'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 28,
     name: L('صينية تقديم', 'Serving tray'),
     slug: 'serving-tray',
@@ -701,7 +723,7 @@ export const products: Product[] = [
       ['المقاس', 'Size', 'وسط', 'Medium'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 29,
     name: L('طبق تقديم', 'Serving plate'),
     slug: 'serving-plate',
@@ -722,7 +744,7 @@ export const products: Product[] = [
       ['القطر', 'Diameter', '32 سم', '32 cm'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 30,
     name: L('طقم أطباق', 'Dinner plates set'),
     slug: 'dinner-plates-set',
@@ -745,7 +767,7 @@ export const products: Product[] = [
       ['الخامة', 'Material', 'خزف', 'Ceramic'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 31,
     name: L('قفازات فرن', 'Oven gloves'),
     slug: 'oven-gloves',
@@ -765,7 +787,7 @@ export const products: Product[] = [
       ['الزوج', 'Pair', '2 قطعة', '2 pieces'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 32,
     name: L('مريلة مطبخ', 'Kitchen apron'),
     slug: 'kitchen-apron',
@@ -787,7 +809,7 @@ export const products: Product[] = [
       ['المقاس', 'Size', 'مقاس حر', 'One size'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 33,
     name: L('فوط مطبخ', 'Kitchen towels'),
     slug: 'kitchen-towels',
@@ -808,7 +830,7 @@ export const products: Product[] = [
       ['الخامة', 'Material', 'قطن', 'Cotton'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 34,
     name: L('حامل أطباق', 'Dish rack'),
     slug: 'dish-rack',
@@ -830,7 +852,7 @@ export const products: Product[] = [
       ['الخامة', 'Material', 'معدن مطلي', 'Coated metal'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 35,
     name: L('منظم حوض المطبخ', 'Sink organizer'),
     slug: 'sink-organizer',
@@ -852,7 +874,7 @@ export const products: Product[] = [
       ['التصريف', 'Drainage', 'ذاتي', 'Self-draining'],
     ),
   }),
-  createProduct({
+  createStaticProduct({
     id: 36,
     name: L('فرشاة تنظيف المطبخ', 'Kitchen cleaning brush'),
     slug: 'kitchen-cleaning-brush',

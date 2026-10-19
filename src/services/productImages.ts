@@ -1,0 +1,160 @@
+import { FALLBACK_IMAGE } from '../utils/images'
+import { supabase } from '../lib/supabase'
+import type { Product, ProductImage } from '../types/product'
+
+export const PRODUCT_IMAGE_BUCKET = 'product-images'
+const MAX_EDGE = 1600
+const MAX_UPLOAD_BYTES = 2 * 1024 * 1024
+const MAX_SOURCE_BYTES = 15 * 1024 * 1024
+const SIGNED_URL_SECONDS = 60 * 60 * 6
+const STORAGE_PATH =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.webp$/i
+
+const INPUT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+
+export function isStoragePath(value: string): boolean {
+  return STORAGE_PATH.test(value)
+}
+
+function mimeFromName(name: string): string {
+  const extension = name.split('.').pop()?.toLowerCase()
+  if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg'
+  if (extension === 'png') return 'image/png'
+  if (extension === 'webp') return 'image/webp'
+  return ''
+}
+
+function canvasBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) resolve(blob)
+        else reject(new Error('IMAGE_ENCODE_FAILED'))
+      },
+      'image/webp',
+      quality,
+    )
+  })
+}
+
+async function drawScaled(file: File, edge: number, quality: number): Promise<Blob> {
+  const bitmap = await createImageBitmap(file)
+  const scale = Math.min(1, edge / Math.max(bitmap.width, bitmap.height))
+  const width = Math.max(1, Math.round(bitmap.width * scale))
+  const height = Math.max(1, Math.round(bitmap.height * scale))
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const context = canvas.getContext('2d')
+  if (!context) {
+    bitmap.close()
+    throw new Error('IMAGE_ENCODE_FAILED')
+  }
+  context.drawImage(bitmap, 0, 0, width, height)
+  bitmap.close()
+  return canvasBlob(canvas, quality)
+}
+
+export async function compressProductImage(file: File): Promise<Blob> {
+  const type = file.type || mimeFromName(file.name)
+  if (!INPUT_TYPES.has(type)) throw new Error('IMAGE_TYPE')
+  if (file.size > MAX_SOURCE_BYTES) throw new Error('IMAGE_TOO_LARGE')
+
+  let edge = MAX_EDGE
+  let quality = 0.82
+  let blob = await drawScaled(file, edge, quality)
+  while (blob.size > MAX_UPLOAD_BYTES && (quality > 0.55 || edge > 960)) {
+    if (quality > 0.55) quality = Math.round((quality - 0.08) * 100) / 100
+    else edge = Math.round(edge * 0.8)
+    blob = await drawScaled(file, edge, quality)
+  }
+  if (blob.size > MAX_UPLOAD_BYTES) throw new Error('IMAGE_TOO_LARGE')
+  return blob
+}
+
+export async function attachImageUrls(products: Product[]): Promise<Product[]> {
+  const paths = [
+    ...new Set(
+      products.flatMap((product) => product.gallery.map((image) => image.path).filter(isStoragePath)),
+    ),
+  ]
+  const signed = new Map<string, string>()
+
+  for (let index = 0; index < paths.length; index += 80) {
+    const chunk = paths.slice(index, index + 80)
+    const { data, error } = await supabase.storage
+      .from(PRODUCT_IMAGE_BUCKET)
+      .createSignedUrls(chunk, SIGNED_URL_SECONDS)
+    if (error || !data) continue
+    for (const item of data) {
+      if (item.signedUrl && !item.error) signed.set(item.path ?? '', item.signedUrl)
+    }
+  }
+
+  return products.map((product) => {
+    const gallery = product.gallery.map((image) => ({
+      ...image,
+      url: isStoragePath(image.path) ? (signed.get(image.path) ?? FALLBACK_IMAGE) : image.path,
+    }))
+    const urls = gallery.map((image) => image.url).filter((url) => url !== FALLBACK_IMAGE)
+    const display = urls.length > 0 ? urls : [FALLBACK_IMAGE]
+    return { ...product, gallery, image: display[0] ?? FALLBACK_IMAGE, images: display }
+  })
+}
+
+export async function uploadProductImages(
+  productId: string,
+  files: File[],
+  startOrder: number,
+  firstIsPrimary: boolean,
+): Promise<void> {
+  for (const [index, file] of files.entries()) {
+    const blob = await compressProductImage(file)
+    const id = crypto.randomUUID()
+    const path = `${productId}/${id}.webp`
+    const uploaded = await supabase.storage.from(PRODUCT_IMAGE_BUCKET).upload(path, blob, {
+      contentType: 'image/webp',
+      cacheControl: '31536000',
+      upsert: false,
+    })
+    if (uploaded.error) throw uploaded.error
+
+    const inserted = await supabase.from('product_images').insert({
+      id,
+      product_id: productId,
+      image_url: path,
+      sort_order: startOrder + index,
+      is_primary: firstIsPrimary && index === 0,
+    })
+    if (inserted.error) {
+      await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([path])
+      throw inserted.error
+    }
+  }
+}
+
+export async function saveImageOrder(productId: string, images: ProductImage[]): Promise<void> {
+  const cleared = await supabase
+    .from('product_images')
+    .update({ is_primary: false })
+    .eq('product_id', productId)
+  if (cleared.error) throw cleared.error
+
+  for (const [index, image] of images.entries()) {
+    const updated = await supabase
+      .from('product_images')
+      .update({ sort_order: index, is_primary: index === 0 })
+      .eq('id', image.id)
+      .eq('product_id', productId)
+    if (updated.error) throw updated.error
+  }
+}
+
+export async function deleteProductImage(image: ProductImage): Promise<void> {
+  if (isStoragePath(image.path)) {
+    const removed = await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([image.path])
+    if (removed.error) throw removed.error
+  }
+  const deleted = await supabase.from('product_images').delete().eq('id', image.id)
+  if (deleted.error) throw deleted.error
+}

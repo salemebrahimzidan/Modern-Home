@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 5173 --strictPort",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@pdf-lib/fontkit": "^1.1.1",
+    "@supabase/supabase-js": "^2.118.0",
     "arabic-persian-reshaper": "^1.0.1",
     "bidi-js": "^1.1.0",
     "lucide-react": "^1.47.0",

@@ -1,10 +1,11 @@
 import CategoryCard from '../components/categories/CategoryCard'
-import { categories } from '../data/categories'
+import { useCatalog } from '../context/CatalogContext'
 import { useLocale } from '../hooks/useLocale'
 import { usePageSeo } from '../hooks/usePageSeo'
 
 export default function CategoriesPage() {
   const { t } = useLocale()
+  const { categories } = useCatalog()
   usePageSeo(t('categoriesPage.seoTitle'), t('categoriesPage.seoDescription'))
 
   return (

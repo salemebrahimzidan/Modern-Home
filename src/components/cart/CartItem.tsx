@@ -16,7 +16,7 @@ export default function CartItem({ item }: CartItemProps) {
   const { increaseQuantity, decreaseQuantity, removeFromCart } = useCart()
   const { locale, t } = useLocale()
   const name = localized(item.product.name, locale)
-  const lineTotal = item.product.price * item.quantity
+  const lineTotal = item.unitPrice * item.quantity
 
   return (
     <li className="flex gap-3 border-b border-dashed border-mist py-4 last:border-b-0">
@@ -38,10 +38,13 @@ export default function CartItem({ item }: CartItemProps) {
             className="min-w-0 flex-1 font-display text-sm font-semibold leading-5 hover:text-accent"
           >
             <span className="line-clamp-2">{name}</span>
+            <span className="mt-1 block text-xs font-normal text-muted">
+              {item.color} · {item.size}
+            </span>
           </Link>
           <button
             type="button"
-            onClick={() => removeFromCart(item.product.id)}
+            onClick={() => removeFromCart(item.variantId)}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-danger/10 text-danger transition hover:bg-danger hover:text-white"
             aria-label={t('product.removeAria', { name })}
           >
@@ -54,7 +57,7 @@ export default function CartItem({ item }: CartItemProps) {
             <button
               type="button"
               className="flex h-8 w-8 items-center justify-center text-accent hover:bg-accent hover:text-white"
-              onClick={() => decreaseQuantity(item.product.id)}
+              onClick={() => decreaseQuantity(item.variantId)}
               aria-label={t('product.decreaseQty')}
             >
               <Minus size={13} />
@@ -63,9 +66,9 @@ export default function CartItem({ item }: CartItemProps) {
             <button
               type="button"
               className="flex h-8 w-8 items-center justify-center text-accent hover:bg-accent hover:text-white disabled:opacity-40"
-              onClick={() => increaseQuantity(item.product.id)}
+              onClick={() => increaseQuantity(item.variantId)}
               aria-label={t('product.increaseQty')}
-              disabled={item.quantity >= item.product.stock}
+              disabled={item.quantity >= item.stock}
             >
               <Plus size={13} />
             </button>

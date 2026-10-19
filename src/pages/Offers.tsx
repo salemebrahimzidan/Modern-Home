@@ -1,14 +1,16 @@
 import { Percent } from 'lucide-react'
 import { useMemo } from 'react'
 import ProductGrid from '../components/products/ProductGrid'
+import { useCatalog } from '../context/CatalogContext'
 import { useLocale } from '../hooks/useLocale'
 import { usePageSeo } from '../hooks/usePageSeo'
 import { getOfferProducts } from '../services/catalog'
 
 export default function Offers() {
   const { t } = useLocale()
+  const { products } = useCatalog()
   usePageSeo(t('offers.seoTitle'), t('offers.seoDescription'))
-  const offers = useMemo(() => getOfferProducts(), [])
+  const offers = useMemo(() => getOfferProducts(products), [products])
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">

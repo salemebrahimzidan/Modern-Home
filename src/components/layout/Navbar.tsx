@@ -1,7 +1,8 @@
-import { Menu, Search, ShoppingBag, X } from 'lucide-react'
+import { Menu, Search, ShoppingBag, UserRound, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { storeConfig } from '../../config/store'
+import { useAuth } from '../../context/AuthContext'
 import { useLocale } from '../../hooks/useLocale'
 import { useCart } from '../../hooks/useCart'
 import { openWhatsAppChat } from '../../utils/whatsapp'
@@ -11,6 +12,7 @@ import MobileMenu from './MobileMenu'
 
 export default function Navbar() {
   const { getCartItemsCount } = useCart()
+  const { session } = useAuth()
   const { t } = useLocale()
   const count = getCartItemsCount()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -101,6 +103,13 @@ export default function Navbar() {
           >
             <WhatsAppIcon size={18} />
           </button>
+          <Link
+            to={session ? '/account' : '/login'}
+            className="header-icon inline-flex"
+            aria-label={t('nav.accountAria')}
+          >
+            <UserRound size={20} />
+          </Link>
           <Link
             to="/cart"
             className="header-icon relative inline-flex"

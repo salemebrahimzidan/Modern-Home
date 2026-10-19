@@ -55,7 +55,8 @@
     "mainAria": "Main navigation",
     "mobileAria": "Mobile menu",
     "cartAria": "Shopping cart",
-    "cartAriaCount": "Shopping cart, {count} items"
+    "cartAriaCount": "Shopping cart, {count} items",
+    "accountAria": "My account"
   },
   "language": {
     "switcher": "Language",
@@ -130,7 +131,10 @@
     "addAria": "Add {name} to cart",
     "detailsAria": "Details for {name}",
     "whatsappAria": "Ask about {name} on WhatsApp",
-    "removeAria": "Remove {name}"
+    "removeAria": "Remove {name}",
+    "color": "Color",
+    "size": "Size",
+    "photoNote": "Illustrative photography. Ask for actual product photos and confirm specifications before purchase."
   },
   "categoriesPage": {
     "seoTitle": "Categories",
@@ -155,7 +159,7 @@
     "title": "Shopping cart",
     "subtitle": "Review your order, then send it to the store on WhatsApp.",
     "emptyTitle": "Your cart is empty",
-    "emptyDescription": "Add kitchen tools from the showroom, then come back to send your order on WhatsApp.",
+    "emptyDescription": "Add kitchen tools from the showroom, then come back to place your order.",
     "customerDetails": "Customer details",
     "fullName": "Full name",
     "phone": "Phone number",
@@ -167,10 +171,11 @@
     "itemCount": "Items",
     "subtotal": "Subtotal",
     "total": "Total",
-    "noOnlinePayment": "There is no online payment yet. Orders are sent on WhatsApp to complete the purchase with the store.",
+    "noOnlinePayment": "Pay cash on delivery or with manually reviewed Vodafone Cash. The order price is calculated in the database.",
     "added": "Product added to cart",
     "removed": "Product removed from cart",
-    "unavailable": "This product is currently unavailable"
+    "unavailable": "This product is currently unavailable",
+    "syncFailed": "The cart could not be synced. Please try again."
   },
   "about": {
     "seoTitle": "About us",
@@ -237,5 +242,97 @@
     "notes": "Notes:",
     "inquiry": "Hello, I would like to ask about this product:",
     "price": "Price"
+  },
+  "auth": {
+    "login": "Sign in",
+    "register": "Create account",
+    "logout": "Sign out",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full name",
+    "phone": "Phone number",
+    "haveAccount": "Already have an account?",
+    "needAccount": "Need an account?",
+    "confirmEmail": "Account created. Confirm your email, then sign in.",
+    "failed": "The request could not be completed"
+  },
+  "checkout": {
+    "governorate": "Governorate",
+    "city": "City",
+    "method": "Payment method",
+    "cod": "Cash on delivery",
+    "vodafone": "Vodafone Cash",
+    "senderPhone": "Sender phone",
+    "reference": "Transfer reference",
+    "referenceRequired": "Enter the transfer reference",
+    "vodafoneNote": "Vodafone Cash is confirmed manually after the transfer is reviewed. Sending proof does not mark the payment as paid.",
+    "place": "Place order",
+    "placing": "Placing order...",
+    "signInRequired": "Sign in to place an order. Browsing and adding products does not require an account.",
+    "failed": "The order could not be placed"
+  },
+  "account": {
+    "title": "My account",
+    "orders": "My orders",
+    "empty": "No orders yet",
+    "tracking": "Order tracking",
+    "reference": "Order number",
+    "total": "Total",
+    "status": "Status",
+    "payment": "Payment",
+    "proof": "Send transfer proof",
+    "proofSent": "Proof sent and waiting for review",
+    "denied": "Sign in to view this page"
+  },
+  "orderStatus": {
+    "pending": "Pending review",
+    "confirmed": "Confirmed",
+    "preparing": "Preparing",
+    "out_for_delivery": "Out for delivery",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled"
+  },
+  "paymentStatus": {
+    "pending": "Awaiting collection",
+    "awaiting_verification": "Awaiting transfer review",
+    "paid": "Paid",
+    "rejected": "Rejected",
+    "cancelled": "Cancelled"
+  },
+  "admin": {
+    "title": "Admin",
+    "denied": "This page is for administrators only",
+    "products": "Products and inventory",
+    "orders": "Orders and payments",
+    "category": "New category",
+    "product": "New product",
+    "variant": "New variant",
+    "save": "Save",
+    "price": "Price",
+    "stock": "Stock",
+    "active": "Available to sell",
+    "visible": "Visible in the store",
+    "saved": "Saved",
+    "slugPreview": "Link: {slug}",
+    "slugInvalid": "Enter an English name that contains letters or numbers. Spaces and symbols are removed, and the link can use only lowercase letters, numbers, and hyphens.",
+    "slugDuplicate": "This link is already used. Enter a different English name.",
+    "markPaid": "Mark paid",
+    "rejectPayment": "Reject payment",
+    "updateStatus": "Update status",
+    "emptyCatalog": "No products yet. Add a category, then a product and a variant.",
+    "images": "Product images",
+    "addImages": "Add images",
+    "imagePrimary": "Primary",
+    "moveEarlier": "Move earlier",
+    "moveLater": "Move later",
+    "removeImage": "Remove image",
+    "imageHint": "The first image is the primary photo on the product card. JPG, PNG, and WebP files are compressed to WebP before upload.",
+    "imagePending": "Preview",
+    "imageType": "Only JPG, PNG, and WebP files are accepted",
+    "imageTooLarge": "This image is larger than the allowed limit",
+    "imageFailed": "The image could not be saved",
+    "imageSaving": "Compressing and uploading...",
+    "imageLimit": "A product can have up to {count} images",
+    "imagesAfterSave": "After you save the product, add its photos from the product card below."
   }
 }

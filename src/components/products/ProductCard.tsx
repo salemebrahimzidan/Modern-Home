@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import DirectionalArrow from '../common/DirectionalArrow'
+import { useCatalog } from '../../context/CatalogContext'
 import { useCart } from '../../hooks/useCart'
 import { useLocale } from '../../hooks/useLocale'
 import { getCategoryName } from '../../services/catalog'
@@ -11,6 +12,7 @@ import { formatCurrency } from '../../utils/currency'
 import { getProductDiscount, getProductPath } from '../../utils/product'
 export default function ProductCard({ product }: { product: Product }) {
   const { addToCart } = useCart()
+  const { categories } = useCatalog()
   const { locale, t } = useLocale()
   const name = localized(product.name, locale)
   const path = getProductPath(product)
@@ -36,7 +38,7 @@ export default function ProductCard({ product }: { product: Product }) {
         ) : null}
       </Link>
       <div className="refined-product-copy">
-        <p className="product-category">{getCategoryName(product.categoryId, locale)}</p>
+        <p className="product-category">{getCategoryName(categories, product.categoryId, locale)}</p>
         <Link to={path}>
           <h3>{name}</h3>
         </Link>

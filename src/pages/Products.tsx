@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import CatalogBrowser, { type CatalogQuery } from '../components/products/CatalogBrowser'
+import { useCatalog } from '../context/CatalogContext'
 import { useLocale } from '../hooks/useLocale'
 import { usePageSeo } from '../hooks/usePageSeo'
 import { localized } from '../i18n/types'
-import { fetchProducts, filterAndSortProducts, getCategoryBySlug } from '../services/catalog'
-import type { Product, ProductSortOption } from '../types/product'
+import { filterAndSortProducts, getCategoryBySlug } from '../services/catalog'
+import type { ProductSortOption } from '../types/product'
 
 const sortValues: ProductSortOption[] = [
   'newest',
@@ -26,9 +27,8 @@ function parseSort(value: string | null): ProductSortOption {
 
 export default function ProductsPage() {
   const { locale, t } = useLocale()
+  const { products, categories, ready } = useCatalog()
   const [params, setParams] = useSearchParams()
-  const [loading, setLoading] = useState(true)
-  const [allProducts, setAllProducts] = useState<Product[]>([])
 
   const query: CatalogQuery = {
     search: params.get('search') ?? '',
@@ -39,7 +39,9 @@ export default function ProductsPage() {
     maxPrice: params.get('maxPrice') ?? '',
   }
 
-  const selectedCategory = query.categorySlug ? getCategoryBySlug(query.categorySlug) : undefined
+  const selectedCategory = query.categorySlug
+    ? getCategoryBySlug(categories, query.categorySlug)
+    : undefined
   const categoryName = selectedCategory ? localized(selectedCategory.name, locale) : undefined
 
   usePageSeo(
@@ -49,22 +51,9 @@ export default function ProductsPage() {
       : t('products.browseAll'),
   )
 
-  useEffect(() => {
-    let active = true
-    setLoading(true)
-    void fetchProducts().then((data) => {
-      if (!active) return
-      setAllProducts(data)
-      setLoading(false)
-    })
-    return () => {
-      active = false
-    }
-  }, [])
-
   const visible = useMemo(
     () =>
-      filterAndSortProducts(allProducts, {
+      filterAndSortProducts(products, categories, {
         search: query.search,
         material: query.material,
         categorySlug: query.categorySlug || undefined,
@@ -72,7 +61,7 @@ export default function ProductsPage() {
         maxPrice: query.maxPrice ? Number(query.maxPrice) : undefined,
         sort: query.sort,
       }),
-    [allProducts, query.search, query.material, query.categorySlug, query.minPrice, query.maxPrice, query.sort],
+    [products, categories, query.search, query.material, query.categorySlug, query.minPrice, query.maxPrice, query.sort],
   )
 
   function updateParam(key: keyof CatalogQuery, value: string) {
@@ -95,9 +84,9 @@ export default function ProductsPage() {
         </p>
       </header>
       <CatalogBrowser
-        sourceProducts={allProducts}
+        sourceProducts={products}
         visibleProducts={visible}
-        loading={loading}
+        loading={!ready}
         query={query}
         onChange={updateParam}
         onReset={() => setParams({}, { replace: false })}

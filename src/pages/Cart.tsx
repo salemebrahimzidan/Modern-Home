@@ -1,215 +1,215 @@
-import { MapPin, Phone, Plus, ShoppingBag, UserRound } from 'lucide-react'
-import { useEffect, useRef, useState, type FormEvent, type HTMLAttributes, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { MapPin, Phone, User } from 'lucide-react'
+import { useRef, useState, type FormEvent, type HTMLAttributes, type ReactNode } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import CartItem from '../components/cart/CartItem'
 import CartSummary from '../components/cart/CartSummary'
-import EmptyCart from '../components/cart/EmptyCart'
 import Button from '../components/common/Button'
-import WhatsAppIcon from '../components/common/WhatsAppIcon'
+import EmptyState from '../components/common/EmptyState'
+import { useAuth } from '../context/AuthContext'
 import { useCart } from '../hooks/useCart'
 import { useLocale } from '../hooks/useLocale'
-import { usePageSeo } from '../hooks/usePageSeo'
-import type { OrderCustomer } from '../types/order'
-import { createOrderReference } from '../utils/orderReference'
-import { validateCustomerForm } from '../utils/validation'
-import { buildOrderPayload, buildWhatsAppOrderFileMessage, openWhatsApp } from '../utils/whatsapp'
+import { createAddress, placeOrder, submitVodafoneProof, type StorePaymentMethod } from '../services/orders'
+import { isValidEgyptianPhone } from '../utils/validation'
 
-export default function CartPage() {
-  const { locale, t } = useLocale()
-  usePageSeo(t('cart.seoTitle'), t('cart.seoDescription'))
-  const { items } = useCart()
-  const [customer, setCustomer] = useState<OrderCustomer>({
-    name: '',
-    phone: '',
-    address: '',
-    notes: '',
+interface CheckoutForm {
+  recipientName: string
+  phone: string
+  governorate: string
+  city: string
+  street: string
+  notes: string
+  method: StorePaymentMethod
+  senderPhone: string
+  transferReference: string
+}
+
+const emptyForm: CheckoutForm = {
+  recipientName: '',
+  phone: '',
+  governorate: '',
+  city: '',
+  street: '',
+  notes: '',
+  method: 'cod',
+  senderPhone: '',
+  transferReference: '',
+}
+
+export default function Cart() {
+  const { items, clearCart } = useCart()
+  const { t } = useLocale()
+  const { session, profile } = useAuth()
+  const navigate = useNavigate()
+  const [form, setForm] = useState<CheckoutForm>({
+    ...emptyForm,
+    recipientName: profile?.fullName ?? '',
+    phone: profile?.phone ?? '',
   })
-  const [errors, setErrors] = useState<
-    Partial<Record<'name' | 'phone' | 'address', string>>
-  >({})
-  const [orderDoc, setOrderDoc] = useState<{ reference: string; issuedAt: Date } | null>(null)
-  const [downloading, setDownloading] = useState(false)
-  const [pdfError, setPdfError] = useState('')
-  const checkoutKey = JSON.stringify({
-    customer,
-    items: items.map((item) => [item.product.id, item.quantity, item.product.price]),
-  })
-  const checkoutKeyRef = useRef(checkoutKey)
-  checkoutKeyRef.current = checkoutKey
+  const [errors, setErrors] = useState<Partial<Record<keyof CheckoutForm, string>>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [message, setMessage] = useState('')
+  const idempotencyKey = useRef(crypto.randomUUID())
 
-  useEffect(() => {
-    setOrderDoc(null)
-    setPdfError('')
-  }, [checkoutKey])
+  const set = (key: keyof CheckoutForm) => (value: string) =>
+    setForm((current) => ({ ...current, [key]: value }))
 
-  if (items.length === 0) {
-    return <EmptyCart />
-  }
-
-  async function onSubmit(event: FormEvent) {
+  const submit = async (event: FormEvent) => {
     event.preventDefault()
-    const nextErrors = validateCustomerForm(customer, locale)
-    setErrors(nextErrors)
-    if (Object.keys(nextErrors).length > 0) return
+    if (!session) return
+    const next: Partial<Record<keyof CheckoutForm, string>> = {}
+    if (!form.recipientName.trim()) next.recipientName = t('validation.nameRequired')
+    if (!form.phone.trim()) next.phone = t('validation.phoneRequired')
+    else if (!isValidEgyptianPhone(form.phone)) next.phone = t('validation.phoneInvalid')
+    if (!form.governorate.trim() || !form.city.trim() || !form.street.trim()) {
+      next.street = t('validation.addressRequired')
+    }
+    if (form.method === 'vodafone_cash') {
+      if (!isValidEgyptianPhone(form.senderPhone)) next.senderPhone = t('validation.phoneInvalid')
+      if (form.transferReference.trim().length < 4) {
+        next.transferReference = t('checkout.referenceRequired')
+      }
+    }
+    setErrors(next)
+    if (Object.keys(next).length > 0) return
 
-    const issuedAt = orderDoc?.issuedAt ?? new Date()
-    const reference = orderDoc?.reference ?? createOrderReference(issuedAt)
-    const keyAtSubmit = checkoutKey
-    setDownloading(true)
-    setPdfError('')
+    setSubmitting(true)
+    setMessage('')
     try {
-      const { downloadOrderPdf } = await import('../utils/orderPdf')
-      await downloadOrderPdf({
-        payload: buildOrderPayload(customer, items, locale),
-        reference,
-        issuedAt,
-        locale,
+      const addressId = await createAddress(session.user.id, form)
+      const orderId = await placeOrder({
+        addressId,
+        method: form.method,
+        idempotencyKey: idempotencyKey.current,
+        note: form.notes,
       })
-      if (checkoutKeyRef.current === keyAtSubmit) setOrderDoc({ reference, issuedAt })
-    } catch {
-      setPdfError(
-        locale === 'ar'
-          ? 'تعذر إنشاء ملف الطلب. حاول مرة أخرى.'
-          : 'The order file could not be created. Please try again.',
-      )
+      if (form.method === 'vodafone_cash') {
+        await submitVodafoneProof(orderId, form.senderPhone, form.transferReference)
+      }
+      clearCart()
+      navigate(`/account/orders/${orderId}`)
+    } catch (cause) {
+      setMessage(cause instanceof Error ? cause.message : t('checkout.failed'))
     } finally {
-      setDownloading(false)
+      setSubmitting(false)
     }
   }
 
-  function openOrderWhatsApp() {
-    if (!orderDoc) return
-    const payload = buildOrderPayload(customer, items, locale)
-    openWhatsApp(buildWhatsAppOrderFileMessage(orderDoc.reference, payload.total, locale))
-  }
-
   return (
-    <section className="mx-auto max-w-7xl px-4 py-8 pb-28 sm:px-6 sm:py-10">
-      <div className="mb-6 flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
-          <ShoppingBag size={20} />
-        </div>
-        <div>
-          <h1 className="font-display text-2xl font-bold sm:text-3xl">
-            {t('cart.title')}
-          </h1>
-          <p className="mt-1 text-sm text-muted">{t('cart.subtitle')}</p>
-        </div>
-      </div>
+    <section className="mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-12">
+      <h1 className="mb-8 font-display text-3xl text-ink md:text-4xl">{t('cart.title')}</h1>
 
-      <p className="checkout-progress">
-        {locale === 'ar'
-          ? '01 مراجعة المنتجات ← 02 بيانات التوصيل ← 03 تنزيل الملخص ← 04 إرفاق الملف في واتساب'
-          : '01 Review items → 02 Delivery details → 03 Download the summary → 04 Attach the file in WhatsApp'}
-      </p>
-      <div className="grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
-        <div className="overflow-hidden border border-mist bg-surface">
-          <ul className="px-4 sm:px-5">
+      {items.length === 0 ? (
+        <EmptyState title={t('cart.emptyTitle')} description={t('cart.emptyDescription')} />
+      ) : (
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="space-y-4">
             {items.map((item) => (
-              <CartItem key={item.product.id} item={item} />
+              <CartItem key={item.variantId} item={item} />
             ))}
-          </ul>
-
-          <div className="border-t border-mist/70 bg-paper/80 px-4 py-3 sm:px-5">
-            <Link to="/products" className="block">
-              <Button type="button" variant="primary" fullWidth>
-                <Plus size={16} />
-                {t('cart.addOtherProduct')}
-              </Button>
-            </Link>
+          </div>
+          <div className="h-fit space-y-4 rounded-3xl border border-mist bg-surface p-5 lg:sticky lg:top-24">
+            <CartSummary />
+            {session ? (
+              <form className="space-y-3" onSubmit={(event) => void submit(event)}>
+                <h2 className="font-display text-xl text-ink">{t('cart.customerDetails')}</h2>
+                <Field
+                  label={t('cart.fullName')}
+                  icon={<User className="h-4 w-4" />}
+                  value={form.recipientName}
+                  onChange={set('recipientName')}
+                  error={errors.recipientName}
+                />
+                <Field
+                  label={t('cart.phone')}
+                  icon={<Phone className="h-4 w-4" />}
+                  value={form.phone}
+                  onChange={set('phone')}
+                  error={errors.phone}
+                  inputMode="tel"
+                />
+                <Field
+                  label={t('checkout.governorate')}
+                  icon={<MapPin className="h-4 w-4" />}
+                  value={form.governorate}
+                  onChange={set('governorate')}
+                />
+                <Field
+                  label={t('checkout.city')}
+                  icon={<MapPin className="h-4 w-4" />}
+                  value={form.city}
+                  onChange={set('city')}
+                />
+                <Field
+                  label={t('cart.address')}
+                  icon={<MapPin className="h-4 w-4" />}
+                  value={form.street}
+                  onChange={set('street')}
+                  error={errors.street}
+                />
+                <label className="block text-sm">
+                  {t('cart.notes')}
+                  <textarea
+                    value={form.notes}
+                    onChange={(event) => set('notes')(event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-mist bg-paper px-3 py-2.5 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/15"
+                    rows={2}
+                  />
+                </label>
+                <fieldset className="space-y-2 text-sm">
+                  <legend className="mb-1 font-medium text-ink">{t('checkout.method')}</legend>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      checked={form.method === 'cod'}
+                      onChange={() => set('method')('cod')}
+                    />
+                    {t('checkout.cod')}
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      checked={form.method === 'vodafone_cash'}
+                      onChange={() => set('method')('vodafone_cash')}
+                    />
+                    {t('checkout.vodafone')}
+                  </label>
+                </fieldset>
+                {form.method === 'vodafone_cash' ? (
+                  <>
+                    <Field
+                      label={t('checkout.senderPhone')}
+                      icon={<Phone className="h-4 w-4" />}
+                      value={form.senderPhone}
+                      onChange={set('senderPhone')}
+                      error={errors.senderPhone}
+                      inputMode="tel"
+                    />
+                    <Field
+                      label={t('checkout.reference')}
+                      icon={<MapPin className="h-4 w-4" />}
+                      value={form.transferReference}
+                      onChange={set('transferReference')}
+                      error={errors.transferReference}
+                    />
+                    <p className="text-xs leading-6 text-muted">{t('checkout.vodafoneNote')}</p>
+                  </>
+                ) : null}
+                {message ? <p className="text-sm text-danger">{message}</p> : null}
+                <Button type="submit" fullWidth disabled={submitting}>
+                  {submitting ? t('checkout.placing') : t('checkout.place')}
+                </Button>
+              </form>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm leading-6 text-muted">{t('checkout.signInRequired')}</p>
+                <Link to="/login" state={{ from: '/cart' }}>
+                  <Button fullWidth>{t('auth.login')}</Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
-
-        <div className="space-y-4 md:sticky md:top-24">
-          <CartSummary />
-
-          <form
-            noValidate
-            onSubmit={onSubmit}
-            className="space-y-3 border border-mist bg-surface p-4 sm:p-5"
-          >
-            <h2 className="font-display text-lg font-semibold">
-              {t('cart.customerDetails')}
-            </h2>
-
-            <Field
-              label={t('cart.fullName')}
-              icon={<UserRound size={16} />}
-              error={errors.name}
-              value={customer.name}
-              onChange={(value) => setCustomer((c) => ({ ...c, name: value }))}
-              required
-            />
-            <Field
-              label={t('cart.phone')}
-              icon={<Phone size={16} />}
-              error={errors.phone}
-              value={customer.phone}
-              onChange={(value) => setCustomer((c) => ({ ...c, phone: value }))}
-              required
-              inputMode="tel"
-            />
-            <Field
-              label={t('cart.address')}
-              icon={<MapPin size={16} />}
-              error={errors.address}
-              value={customer.address}
-              onChange={(value) => setCustomer((c) => ({ ...c, address: value }))}
-              required
-            />
-            <label className="block text-sm">
-              {t('cart.notes')}
-              <textarea
-                value={customer.notes ?? ''}
-                onChange={(e) => setCustomer((c) => ({ ...c, notes: e.target.value }))}
-                rows={3}
-                className="mt-1 w-full rounded-xl border border-mist bg-paper px-3 py-2.5 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/15"
-              />
-            </label>
-
-            <Button type="submit" size="lg" fullWidth disabled={downloading}>
-              {downloading
-                ? locale === 'ar'
-                  ? 'جارٍ تجهيز الملف...'
-                  : 'Preparing the file...'
-                : locale === 'ar'
-                  ? 'تنزيل ملخص الطلب'
-                  : 'Download order summary'}
-            </Button>
-            {pdfError ? <p className="text-xs leading-6 text-danger">{pdfError}</p> : null}
-            {orderDoc ? (
-              <div className="space-y-3 border border-mist bg-paper p-3">
-                <p className="text-sm leading-6">
-                  {locale === 'ar'
-                    ? `تم تنزيل ملخص الطلب ${orderDoc.reference}. افتح واتساب وأرفق الملف يدوياً من جهازك.`
-                    : `Order summary ${orderDoc.reference} has downloaded. Open WhatsApp and attach the file yourself.`}
-                </p>
-                <p className="text-xs leading-5 text-muted">
-                  {locale === 'ar'
-                    ? 'رابط واتساب لا يرفق الملف تلقائياً، ولا يؤكد الطلب.'
-                    : 'The WhatsApp link cannot attach the PDF automatically, and it does not confirm the order.'}
-                </p>
-                <Button
-                  type="button"
-                  size="lg"
-                  fullWidth
-                  className="bg-[#25D366] hover:bg-[#1ebe57]"
-                  onClick={openOrderWhatsApp}
-                >
-                  <WhatsAppIcon size={18} />
-                  {locale === 'ar' ? 'فتح واتساب' : 'Open WhatsApp'}
-                </Button>
-              </div>
-            ) : (
-              <p className="text-xs leading-6 text-muted">
-                {locale === 'ar'
-                  ? 'بعد التنزيل، أرفق ملف الملخص بنفسك في واتساب. السلة تبقى كما هي.'
-                  : 'After the download, attach the summary yourself in WhatsApp. The cart stays as it is.'}
-              </p>
-            )}
-          </form>
-        </div>
-      </div>
+      )}
     </section>
   )
 }
@@ -220,7 +220,6 @@ function Field({
   value,
   onChange,
   error,
-  required,
   inputMode,
 }: {
   label: string
@@ -228,7 +227,6 @@ function Field({
   value: string
   onChange: (value: string) => void
   error?: string
-  required?: boolean
   inputMode?: HTMLAttributes<HTMLInputElement>['inputMode']
 }) {
   return (
@@ -239,10 +237,9 @@ function Field({
           {icon}
         </span>
         <input
-          required={required}
           value={value}
           inputMode={inputMode}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(event) => onChange(event.target.value)}
           className={[
             'w-full rounded-xl border bg-paper py-2.5 ps-10 pe-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/15',
             error ? 'border-danger' : 'border-mist',

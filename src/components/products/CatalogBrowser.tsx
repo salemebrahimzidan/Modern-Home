@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { categories } from '../../data/categories'
+import { useCatalog } from '../../context/CatalogContext'
 import { useLocale } from '../../hooks/useLocale'
 import { ProductCardSkeleton } from '../common/Loading'
 import ProductFilters from './ProductFilters'
@@ -46,6 +46,7 @@ export default function CatalogBrowser({
   emptyDescription,
 }: CatalogBrowserProps) {
   const { t } = useLocale()
+  const { categories } = useCatalog()
   const materials = useMemo(
     () =>
       Array.from(

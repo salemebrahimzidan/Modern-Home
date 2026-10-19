@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import CategoriesSection from '../components/home/Categories'
 import Hero from '../components/home/Hero'
 import ShoppingGuide from '../components/home/ShoppingGuide'
@@ -8,8 +8,8 @@ import { storeConfig } from '../config/store'
 import { useLocale } from '../hooks/useLocale'
 import { usePageSeo } from '../hooks/usePageSeo'
 import { localized } from '../i18n/types'
-import { fetchProducts, filterAndSortProducts } from '../services/catalog'
-import type { Product } from '../types/product'
+import { useCatalog } from '../context/CatalogContext'
+import { filterAndSortProducts } from '../services/catalog'
 
 const initialQuery: CatalogQuery = {
   search: '',
@@ -22,27 +22,14 @@ const initialQuery: CatalogQuery = {
 
 export default function Home() {
   const { locale, t } = useLocale()
+  const { products, categories, ready } = useCatalog()
   const ar = locale === 'ar'
   usePageSeo(t('home.seoTitle'), localized(storeConfig.description, locale))
-  const [loading, setLoading] = useState(true)
-  const [products, setProducts] = useState<Product[]>([])
   const [query, setQuery] = useState<CatalogQuery>(initialQuery)
-
-  useEffect(() => {
-    let active = true
-    void fetchProducts().then((data) => {
-      if (!active) return
-      setProducts(data)
-      setLoading(false)
-    })
-    return () => {
-      active = false
-    }
-  }, [])
 
   const visible = useMemo(
     () =>
-      filterAndSortProducts(products, {
+      filterAndSortProducts(products, categories, {
         search: query.search,
         material: query.material,
         categorySlug: query.categorySlug || undefined,
@@ -50,7 +37,7 @@ export default function Home() {
         maxPrice: query.maxPrice ? Number(query.maxPrice) : undefined,
         sort: query.sort,
       }),
-    [products, query],
+    [products, categories, query],
   )
 
   return (
@@ -69,7 +56,7 @@ export default function Home() {
           }
           sourceProducts={products}
           visibleProducts={visible}
-          loading={loading}
+          loading={!ready}
           query={query}
           onChange={(key, value) => setQuery((current) => ({ ...current, [key]: value }))}
           onReset={() => setQuery(initialQuery)}

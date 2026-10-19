@@ -7,7 +7,7 @@ export default function ShoppingGuide({ faqOnly = false }: { faqOnly?: boolean }
   const steps = ar
     ? [
         ['اختار اللي يناسبك', 'تصفح الأقسام والخامات والمقاسات، وأضف اختياراتك للسلة.'],
-        ['جهز طلبك على واتساب', 'راجع الكميات وأدخل بيانات التوصيل لإرسال رسالة منظمة.'],
+        ['أكد الطلب من السلة', 'سجّل الدخول، أدخل عنوان التوصيل، واختر الدفع عند الاستلام أو فودافون كاش.'],
         [
           'أكد التفاصيل مع المتجر',
           'تأكد من التوفر والسعر وتكلفة التوصيل وطريقة الدفع قبل الشراء.',
@@ -19,8 +19,8 @@ export default function ShoppingGuide({ faqOnly = false }: { faqOnly?: boolean }
           'Explore categories, materials and sizes, then add your choices to the cart.',
         ],
         [
-          'Prepare your WhatsApp order',
-          'Review quantities and add your delivery details to prepare your message.',
+          'Place the order from your cart',
+          'Sign in, enter the delivery address, then choose cash on delivery or Vodafone Cash.',
         ],
         [
           'Confirm with the store',
@@ -31,7 +31,7 @@ export default function ShoppingGuide({ faqOnly = false }: { faqOnly?: boolean }
     ? [
         [
           'إزاي أعمل طلب؟',
-          'أضف المنتجات للسلة ثم أدخل بياناتك. افتح واتساب من صفحة السلة وراجع الرسالة وأرسلها للمتجر. فتح واتساب لا يؤكد الطلب تلقائياً.',
+          'أضف المنتج باللون والمقاس إلى السلة، ثم سجّل الدخول وأدخل عنوان التوصيل. الدفع عند الاستلام أو فودافون كاش. تحويل فودافون كاش لا يُحسب مدفوعاً إلا بعد مراجعة المتجر.',
         ],
         [
           'التوصيل بكام وبيوصل في قد إيه؟',
@@ -39,7 +39,7 @@ export default function ShoppingGuide({ faqOnly = false }: { faqOnly?: boolean }
         ],
         [
           'إيه طرق الدفع المتاحة؟',
-          'طرق الدفع تُؤكد مع المتجر عند مراجعة الطلب. الموقع لا يستقبل دفعاً إلكترونياً ولا يعرض خيار دفع غير فعّال.',
+          'الدفع عند الاستلام أو فودافون كاش بمراجعة يدوية. الموقع لا يخصم السعر من المتصفح ولا يؤكد التحويل تلقائياً.',
         ],
         [
           'إيه شروط الاستبدال والاسترجاع؟',
@@ -53,7 +53,7 @@ export default function ShoppingGuide({ faqOnly = false }: { faqOnly?: boolean }
     : [
         [
           'How do I order?',
-          'Add products to your cart, enter your details, then open WhatsApp. Review and send the message to the store. Opening WhatsApp does not confirm an order.',
+          'Add a color and size to the cart, sign in, and enter the delivery address. Pay cash on delivery or with Vodafone Cash. A Vodafone transfer is not marked paid until the store reviews it.',
         ],
         [
           'What are the delivery cost and timing?',
@@ -61,7 +61,7 @@ export default function ShoppingGuide({ faqOnly = false }: { faqOnly?: boolean }
         ],
         [
           'Which payment methods are available?',
-          'Payment methods are confirmed with the store when your order is reviewed. This site does not take online payment.',
+          'Cash on delivery, or Vodafone Cash reviewed manually. The site does not trust a browser price or confirm a transfer by itself.',
         ],
         [
           'What is the returns policy?',

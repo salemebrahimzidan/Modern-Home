@@ -1,15 +1,12 @@
 import { Link } from 'react-router-dom'
 import CategoryCard from '../categories/CategoryCard'
-import { categories } from '../../data/categories'
+import { useCatalog } from '../../context/CatalogContext'
 import { useLocale } from '../../hooks/useLocale'
-
-const featuredSlugs = ['cookware', 'kitchen-tools', 'kitchen-storage', 'serving']
 
 export default function CategoriesSection() {
   const { locale, t } = useLocale()
-  const featured = featuredSlugs
-    .map((slug) => categories.find((category) => category.slug === slug))
-    .filter((category) => category !== undefined)
+  const { categories } = useCatalog()
+  const featured = categories.slice(0, 4)
 
   return (
     <section className="collection-section">

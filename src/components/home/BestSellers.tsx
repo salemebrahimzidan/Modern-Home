@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom'
+import { useCatalog } from '../../context/CatalogContext'
 import { getBestSellerProducts } from '../../services/catalog'
 import { useLocale } from '../../hooks/useLocale'
 import ProductGrid from '../products/ProductGrid'
 
 export default function BestSellers() {
   const { t } = useLocale()
-  const items = getBestSellerProducts(8)
+  const { products } = useCatalog()
+  const items = getBestSellerProducts(products, 8)
 
   if (items.length === 0) return null
 

@@ -1,5 +1,12 @@
-import type { Category } from '../types/category'
 import type { LocalizedText } from '../i18n/types'
+
+interface StaticCategory {
+  id: number
+  name: LocalizedText
+  slug: string
+  image: string
+  description?: LocalizedText
+}
 import { unsplashPhoto } from '../utils/images'
 
 const L = (ar: string, en: string): LocalizedText => ({ ar, en })
@@ -8,7 +15,7 @@ function cover(id: string): string {
   return unsplashPhoto(id, { width: 900, height: 700 })
 }
 
-export const categories: Category[] = [
+export const categories: StaticCategory[] = [
   {
     id: 1,
     name: L('أواني الطهي', 'Cookware'),
