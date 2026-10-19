@@ -44,23 +44,23 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-mist/80 bg-surface/90 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl min-w-0 items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-3">
+    <header className="border-b border-mist bg-paper">
+      <div className="mx-auto flex max-w-[1232px] min-w-0 items-center justify-between gap-2 px-4 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-1 sm:gap-2">
           <button
             type="button"
-            className="shrink-0 rounded-xl p-2 hover:bg-mist xl:hidden"
+            className="header-icon inline-flex xl:hidden"
             aria-label={menuOpen ? t('common.closeMenu') : t('common.openMenu')}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
           >
-            {menuOpen ? <X size={22} /> : <Menu size={22} />}
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <Link
-            to="/"
-            className="min-w-0 truncate font-display text-lg font-bold tracking-tight text-accent sm:text-xl md:text-2xl"
-          >
-            {storeConfig.name}
+          <Link to="/" className="min-w-0">
+            <span className="store-wordmark">
+              {storeConfig.name}
+              <small>KITCHEN &amp; LIVING</small>
+            </span>
           </Link>
         </div>
 
@@ -82,31 +82,29 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
           <LanguageToggle />
           <button
             type="button"
-            className="rounded-xl p-2 hover:bg-mist"
+            className="header-icon inline-flex"
             aria-label={t('common.searchAria')}
             aria-expanded={searchOpen}
             onClick={() => setSearchOpen((v) => !v)}
           >
-            <Search size={20} />
+            <Search size={18} />
           </button>
           <button
             type="button"
-            className="hidden rounded-xl p-2 text-[#128C7E] hover:bg-mist sm:inline-flex"
+            className="header-icon hidden text-[#128C7E] sm:inline-flex"
             aria-label={t('common.whatsapp')}
             onClick={() => openWhatsAppChat()}
           >
-            <WhatsAppIcon size={20} />
+            <WhatsAppIcon size={18} />
           </button>
           <Link
             to="/cart"
-            className="relative rounded-xl p-2 hover:bg-mist"
-            aria-label={
-              count > 0 ? t('nav.cartAriaCount', { count }) : t('nav.cartAria')
-            }
+            className="header-icon relative inline-flex"
+            aria-label={count > 0 ? t('nav.cartAriaCount', { count }) : t('nav.cartAria')}
           >
             <ShoppingBag size={20} />
             {count > 0 && (

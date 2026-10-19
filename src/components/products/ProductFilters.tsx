@@ -1,11 +1,15 @@
-import { ChevronDown, RotateCcw, SlidersHorizontal } from 'lucide-react'
+import { ChevronDown, RotateCcw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useLocale } from '../../hooks/useLocale'
 import { localized } from '../../i18n/types'
+import type { LocalizedText } from '../../i18n/types'
 import type { Category } from '../../types/category'
 import type { ProductSortOption } from '../../types/product'
 
 interface ProductFiltersProps {
+  materials: LocalizedText[]
+  material: string
+  onMaterialChange: (value: string) => void
   categories: Category[]
   categorySlug: string
   sort: ProductSortOption
@@ -19,6 +23,9 @@ interface ProductFiltersProps {
 }
 
 export default function ProductFilters({
+  materials,
+  material,
+  onMaterialChange,
   categories,
   categorySlug,
   sort,
@@ -38,108 +45,77 @@ export default function ProductFilters({
       { value: 'newest', label: t('sort.newest') },
       { value: 'price-asc', label: t('sort.priceAsc') },
       { value: 'price-desc', label: t('sort.priceDesc') },
-      { value: 'bestsellers', label: t('sort.bestsellers') },
       { value: 'featured', label: t('sort.featured') },
+      { value: 'bestsellers', label: t('sort.bestsellers') },
     ],
     [t],
   )
 
-  const hasActiveFilters = Boolean(categorySlug || minPrice || maxPrice || sort !== 'newest')
+  const hasActiveFilters = Boolean(
+    material || categorySlug || minPrice || maxPrice || (sort !== 'newest' && sort !== 'featured'),
+  )
 
-  return (
-    <aside className="overflow-hidden rounded-2xl border border-mist/70 bg-surface shadow-card md:sticky md:top-24">
-      <div className="flex items-center justify-between gap-3 border-b border-mist/70 bg-accent-soft/60 px-4 py-3">
+  const panel = (
+    <div id="product-filters-panel" className="catalog-filter-panel">
+      <div className="catalog-categories" role="group" aria-label={t('common.category')}>
         <button
           type="button"
-          className="flex min-w-0 flex-1 items-center gap-2.5 text-start md:pointer-events-none"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          aria-controls="product-filters-panel"
+          className={!categorySlug ? 'is-active' : undefined}
+          onClick={() => onCategoryChange('')}
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-white">
-            <SlidersHorizontal size={16} />
-          </span>
-          <span className="min-w-0">
-            <h2 className="font-display text-base font-semibold leading-none">{t('common.filter')}</h2>
-            <p className="mt-1 truncate text-[11px] text-muted md:hidden">
-              {open ? t('common.close') : t('common.category')}
-            </p>
-          </span>
-          <ChevronDown
-            size={18}
-            className={['ms-auto shrink-0 text-muted transition md:hidden', open ? 'rotate-180' : ''].join(
-              ' ',
-            )}
-          />
+          {t('common.all')}
         </button>
-        <button
-          type="button"
-          onClick={onReset}
-          disabled={!hasActiveFilters}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-accent shadow-sm hover:bg-accent hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-accent"
-        >
-          <RotateCcw size={12} />
-          {t('common.reset')}
-        </button>
+        {categories.map((category) => (
+          <button
+            key={category.id}
+            type="button"
+            className={categorySlug === category.slug ? 'is-active' : undefined}
+            onClick={() => onCategoryChange(category.slug)}
+          >
+            {localized(category.name, locale)}
+          </button>
+        ))}
       </div>
 
-      <div
-        id="product-filters-panel"
-        className={['space-y-5 px-4 py-4', open ? 'block' : 'hidden md:block'].join(' ')}
-      >
-        <fieldset>
-          <legend className="mb-2 text-xs font-semibold tracking-wide text-muted">
-            {t('common.category')}
-          </legend>
-          <div className="flex flex-wrap gap-1.5">
-            <FilterChip
-              active={!categorySlug}
-              label={t('common.all')}
-              onClick={() => onCategoryChange('')}
-            />
-            {categories.map((category) => (
-              <FilterChip
-                key={category.id}
-                active={categorySlug === category.slug}
-                label={localized(category.name, locale)}
-                onClick={() => onCategoryChange(category.slug)}
-              />
+      <div className="catalog-filter-grid">
+        <label>
+          {locale === 'ar' ? 'الخامة' : 'Material'}
+          <select value={material} onChange={(event) => onMaterialChange(event.target.value)}>
+            <option value="">{locale === 'ar' ? 'كل الخامات' : 'All materials'}</option>
+            {materials.map((item) => (
+              <option key={item.en} value={item.en}>
+                {localized(item, locale)}
+              </option>
             ))}
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend className="mb-2 text-xs font-semibold tracking-wide text-muted">
-            {t('common.priceRange')}
-          </legend>
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              type="number"
-              min={0}
-              value={minPrice}
-              onChange={(e) => onMinPriceChange(e.target.value)}
-              placeholder={t('common.from')}
-              aria-label={t('common.minPrice')}
-              className="min-w-0 rounded-xl border border-mist bg-paper px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/15"
-            />
-            <input
-              type="number"
-              min={0}
-              value={maxPrice}
-              onChange={(e) => onMaxPriceChange(e.target.value)}
-              placeholder={t('common.to')}
-              aria-label={t('common.maxPrice')}
-              className="min-w-0 rounded-xl border border-mist bg-paper px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/15"
-            />
-          </div>
-        </fieldset>
-
-        <label className="block text-xs font-semibold tracking-wide text-muted">
+          </select>
+        </label>
+        <label>
+          {t('common.minPrice')}
+          <input
+            type="number"
+            min={0}
+            inputMode="numeric"
+            value={minPrice}
+            onChange={(event) => onMinPriceChange(event.target.value)}
+            placeholder={t('common.from')}
+          />
+        </label>
+        <label>
+          {t('common.maxPrice')}
+          <input
+            type="number"
+            min={0}
+            inputMode="numeric"
+            value={maxPrice}
+            onChange={(event) => onMaxPriceChange(event.target.value)}
+            placeholder={t('common.to')}
+          />
+        </label>
+        <label>
           {t('common.sort')}
           <select
             value={sort}
-            onChange={(e) => onSortChange(e.target.value as ProductSortOption)}
-            className="mt-2 w-full rounded-xl border border-mist bg-paper px-3 py-2.5 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/15"
+            onChange={(event) => onSortChange(event.target.value as ProductSortOption)}
           >
             {sortOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -149,31 +125,28 @@ export default function ProductFilters({
           </select>
         </label>
       </div>
-    </aside>
+    </div>
   )
-}
 
-function FilterChip({
-  active,
-  label,
-  onClick,
-}: {
-  active: boolean
-  label: string
-  onClick: () => void
-}) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        'rounded-full px-3 py-1.5 text-xs font-medium transition',
-        active
-          ? 'bg-accent text-white shadow-sm'
-          : 'bg-paper text-ink ring-1 ring-mist hover:ring-accent/40',
-      ].join(' ')}
-    >
-      {label}
-    </button>
+    <div className="catalog-filters">
+      <div className="catalog-filters-toolbar">
+        <button
+          type="button"
+          className="catalog-filter-toggle md:hidden"
+          aria-expanded={open}
+          aria-controls="product-filters-panel"
+          onClick={() => setOpen((value) => !value)}
+        >
+          {t('common.filter')}
+          <ChevronDown size={16} className={open ? 'rotate-180' : undefined} />
+        </button>
+        <button type="button" onClick={onReset} disabled={!hasActiveFilters} className="catalog-reset">
+          <RotateCcw size={13} />
+          {t('common.reset')}
+        </button>
+      </div>
+      <div className={open ? 'block' : 'hidden md:block'}>{panel}</div>
+    </div>
   )
 }

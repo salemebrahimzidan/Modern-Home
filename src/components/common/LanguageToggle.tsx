@@ -47,7 +47,10 @@ export default function LanguageToggle() {
         onClick={() => setOpen((value) => !value)}
       >
         <span lang={locale} dir={localeMeta[locale].dir}>
-          {t(locale === 'ar' ? 'language.ar' : 'language.en')}
+          <span className="hidden sm:inline">
+            {t(locale === 'ar' ? 'language.ar' : 'language.en')}
+          </span>
+          <span className="sm:hidden">{locale === 'ar' ? 'ع' : 'EN'}</span>
         </span>
         <ChevronDown
           size={14}

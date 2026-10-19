@@ -28,13 +28,10 @@ export interface Product {
 }
 
 export type ProductSortOption =
-  | 'newest'
-  | 'price-asc'
-  | 'price-desc'
-  | 'featured'
-  | 'bestsellers'
+  'newest' | 'price-asc' | 'price-desc' | 'featured' | 'bestsellers'
 
 export interface ProductFilters {
+  material?: string
   search?: string
   categorySlug?: string
   minPrice?: number
