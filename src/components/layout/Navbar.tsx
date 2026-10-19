@@ -8,6 +8,7 @@ import { useCart } from '../../hooks/useCart'
 import { openWhatsAppChat } from '../../utils/whatsapp'
 import LanguageToggle from '../common/LanguageToggle'
 import WhatsAppIcon from '../common/WhatsAppIcon'
+import AccountDrawer from './AccountDrawer'
 import MobileMenu from './MobileMenu'
 
 export default function Navbar() {
@@ -17,6 +18,7 @@ export default function Navbar() {
   const count = getCartItemsCount()
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
@@ -36,6 +38,7 @@ export default function Navbar() {
   useEffect(() => {
     setMenuOpen(false)
     setSearchOpen(false)
+    setAccountOpen(false)
   }, [location.pathname, location.search])
 
   function onSearch(event: FormEvent) {
@@ -103,13 +106,25 @@ export default function Navbar() {
           >
             <WhatsAppIcon size={18} />
           </button>
-          <Link
-            to={session ? '/account' : '/login'}
-            className="header-icon inline-flex"
-            aria-label={t('nav.accountAria')}
-          >
-            <UserRound size={20} />
-          </Link>
+          {session ? (
+            <button
+              type="button"
+              className="header-icon inline-flex"
+              aria-label={t('nav.accountAria')}
+              aria-expanded={accountOpen}
+              onClick={() => {
+                setMenuOpen(false)
+                setSearchOpen(false)
+                setAccountOpen((open) => !open)
+              }}
+            >
+              <UserRound size={20} />
+            </button>
+          ) : (
+            <Link to="/login" className="header-icon inline-flex" aria-label={t('nav.accountAria')}>
+              <UserRound size={20} />
+            </Link>
+          )}
           <Link
             to="/cart"
             className="header-icon relative inline-flex"
@@ -151,6 +166,7 @@ export default function Navbar() {
       )}
 
       <MobileMenu open={menuOpen} links={navLinks} onClose={() => setMenuOpen(false)} />
+      <AccountDrawer open={accountOpen} onClose={() => setAccountOpen(false)} />
     </header>
   )
 }

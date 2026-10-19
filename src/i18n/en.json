@@ -282,7 +282,13 @@
     "payment": "Payment",
     "proof": "Send transfer proof",
     "proofSent": "Proof sent and waiting for review",
-    "denied": "Sign in to view this page"
+    "denied": "Sign in to view this page",
+    "progress": "Order progress",
+    "address": "Delivery address",
+    "items": "Items",
+    "details": "Account details",
+    "latest": "Recent orders",
+    "orderCount": "{count} orders"
   },
   "orderStatus": {
     "pending": "Pending review",

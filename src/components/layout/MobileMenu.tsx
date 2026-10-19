@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { createPortal } from 'react-dom'
+import { NavLink } from 'react-router-dom'
+import { X } from 'lucide-react'
 import { storeConfig } from '../../config/store'
+import { localized } from '../../i18n/types'
 import { useLocale } from '../../hooks/useLocale'
-import { openWhatsAppChat } from '../../utils/whatsapp'
-import WhatsAppIcon from '../common/WhatsAppIcon'
 
 interface MobileMenuProps {
   open: boolean
@@ -12,7 +13,7 @@ interface MobileMenuProps {
 }
 
 export default function MobileMenu({ open, links, onClose }: MobileMenuProps) {
-  const { t } = useLocale()
+  const { locale, t } = useLocale()
   const closeRef = useRef<HTMLButtonElement>(null)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
@@ -34,35 +35,37 @@ export default function MobileMenu({ open, links, onClose }: MobileMenuProps) {
 
   if (!open) return null
 
-  return (
-    <div className="mobile-menu" role="dialog" aria-modal="true" aria-label={t('nav.mobileAria')}>
-      <div className="mobile-menu-bar">
-        <p>{t('nav.mainAria')}</p>
-        <button ref={closeRef} type="button" onClick={onClose}>
-          {t('common.closeMenu')}
-        </button>
+  return createPortal(
+    <div className="mobile-menu-root">
+      <button type="button" className="mobile-menu-backdrop" aria-label={t('common.close')} onClick={onClose} />
+      <div className="mobile-menu" role="dialog" aria-modal="true" aria-label={t('nav.mobileAria')}>
+        <div className="mobile-menu-bar">
+          <div>
+            <span className="store-wordmark">
+              {storeConfig.name}
+              <small>KITCHEN &amp; LIVING</small>
+            </span>
+            <p className="mobile-menu-tagline">{localized(storeConfig.tagline, locale)}</p>
+          </div>
+          <button ref={closeRef} type="button" className="mobile-menu-close" aria-label={t('common.closeMenu')} onClick={onClose}>
+            <X size={18} />
+          </button>
+        </div>
+        <nav aria-label={t('nav.mobileAria')}>
+          {[...links, { to: '/account/orders', label: t('account.orders') }].map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.to === '/'}
+              onClick={onClose}
+              className={({ isActive }) => (isActive ? 'is-active' : undefined)}
+            >
+              {link.label}
+            </NavLink>
+          ))}
+        </nav>
       </div>
-      <nav aria-label={t('nav.mobileAria')}>
-        {links.map((link) => (
-          <Link key={link.to} to={link.to} onClick={onClose}>
-            {link.label}
-          </Link>
-        ))}
-      </nav>
-      <button
-        type="button"
-        className="mobile-menu-whatsapp"
-        onClick={() => {
-          onClose()
-          openWhatsAppChat()
-        }}
-      >
-        <WhatsAppIcon size={18} />
-        {t('common.contactWhatsapp')}
-      </button>
-      <a href={`tel:${storeConfig.phone}`} dir="ltr">
-        {storeConfig.phone}
-      </a>
-    </div>
+    </div>,
+    document.body,
   )
 }
