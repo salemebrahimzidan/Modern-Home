@@ -6,5 +6,5 @@ export function getProductPath(product: Pick<Product, 'slug'>): string {
 }
 
 export function getProductDiscount(product: Product): number | null {
-  return product.discount ?? calcDiscountPercent(product.price, product.oldPrice)
+  return calcDiscountPercent(product.price, product.oldPrice)
 }

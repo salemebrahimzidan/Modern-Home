@@ -11,19 +11,25 @@ import { useLocale } from '../hooks/useLocale'
 import { usePageSeo } from '../hooks/usePageSeo'
 import type { OrderCustomer } from '../types/order'
 import { validateCustomerForm } from '../utils/validation'
-import { buildOrderPayload, buildWhatsAppOrderMessage, openWhatsApp } from '../utils/whatsapp'
+import {
+  buildOrderPayload,
+  buildWhatsAppOrderMessage,
+  openWhatsApp,
+} from '../utils/whatsapp'
 
 export default function CartPage() {
   const { locale, t } = useLocale()
   usePageSeo(t('cart.seoTitle'), t('cart.seoDescription'))
-  const { items, clearCart } = useCart()
+  const { items } = useCart()
   const [customer, setCustomer] = useState<OrderCustomer>({
     name: '',
     phone: '',
     address: '',
     notes: '',
   })
-  const [errors, setErrors] = useState<Partial<Record<'name' | 'phone' | 'address', string>>>({})
+  const [errors, setErrors] = useState<
+    Partial<Record<'name' | 'phone' | 'address', string>>
+  >({})
 
   if (items.length === 0) {
     return <EmptyCart />
@@ -38,7 +44,7 @@ export default function CartPage() {
     const payload = buildOrderPayload(customer, items, locale)
     const message = buildWhatsAppOrderMessage(payload, locale)
     openWhatsApp(message)
-    clearCart()
+    // Keep the cart: opening WhatsApp cannot confirm that the message was sent.
   }
 
   return (
@@ -48,13 +54,20 @@ export default function CartPage() {
           <ShoppingBag size={20} />
         </div>
         <div>
-          <h1 className="font-display text-2xl font-bold sm:text-3xl">{t('cart.title')}</h1>
+          <h1 className="font-display text-2xl font-bold sm:text-3xl">
+            {t('cart.title')}
+          </h1>
           <p className="mt-1 text-sm text-muted">{t('cart.subtitle')}</p>
         </div>
       </div>
 
+      <p className="checkout-progress">
+        {locale === 'ar'
+          ? '01 مراجعة المنتجات ← 02 بيانات التوصيل ← 03 التأكيد على واتساب'
+          : '01 Review items → 02 Delivery details → 03 Confirm on WhatsApp'}
+      </p>
       <div className="grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
-        <div className="overflow-hidden rounded-2xl border border-mist/70 bg-surface shadow-card">
+        <div className="overflow-hidden border border-mist bg-surface">
           <ul className="px-4 sm:px-5">
             {items.map((item) => (
               <CartItem key={item.product.id} item={item} />
@@ -75,10 +88,13 @@ export default function CartPage() {
           <CartSummary />
 
           <form
+            noValidate
             onSubmit={onSubmit}
-            className="space-y-3 rounded-2xl border border-mist/70 bg-surface p-4 shadow-card sm:p-5"
+            className="space-y-3 border border-mist bg-surface p-4 sm:p-5"
           >
-            <h2 className="font-display text-lg font-semibold">{t('cart.customerDetails')}</h2>
+            <h2 className="font-display text-lg font-semibold">
+              {t('cart.customerDetails')}
+            </h2>
 
             <Field
               label={t('cart.fullName')}
@@ -124,6 +140,11 @@ export default function CartPage() {
               <WhatsAppIcon size={18} />
               {t('cart.sendWhatsapp')}
             </Button>
+            <p className="text-xs leading-6 text-muted">
+              {locale === 'ar'
+                ? 'راجع الرسالة في واتساب ثم أرسلها. فتح واتساب لا يؤكد الطلب، والمتجر يؤكد التوفر والتوصيل والدفع.'
+                : 'Review the WhatsApp message and send it yourself. Opening WhatsApp does not confirm the order. The store confirms availability, delivery, and payment.'}
+            </p>
           </form>
         </div>
       </div>

@@ -44,7 +44,7 @@ export function FloatingWhatsAppButton() {
     <button
       type="button"
       onClick={() => openWhatsAppChat()}
-      className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] start-[max(1.25rem,env(safe-area-inset-inline-start))] z-40 flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition hover:scale-105 hover:bg-[#1ebe57] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366] sm:bottom-6 sm:start-6 sm:h-14 sm:w-14"
+      className="floating-whatsapp fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] start-[max(1.25rem,env(safe-area-inset-inline-start))] z-40 flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition hover:scale-105 hover:bg-[#1ebe57] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25D366] sm:bottom-6 sm:start-6 sm:h-14 sm:w-14"
       aria-label={label}
     >
       <WhatsAppIcon size={26} />

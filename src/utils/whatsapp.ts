@@ -23,32 +23,48 @@ export function buildOrderPayload(
   return { customer, items: lines, total }
 }
 
+function formatOrderAmount(amount: number, locale: Locale): string {
+  const formatted = amount.toLocaleString('en-US')
+  return `${formatted} ${localized(storeConfig.currencyLabel, locale)}`
+}
+
 export function buildWhatsAppOrderMessage(
   payload: OrderPayload,
   locale: Locale = 'ar',
 ): string {
+  const ar = locale === 'ar'
   const productLines = payload.items
     .map(
       (item) =>
-        `- ${item.name} × ${item.quantity} — ${formatCurrency(item.lineTotal, locale)}`,
+        `• ${item.name} × ${item.quantity} — ${formatOrderAmount(item.lineTotal, locale)}`,
     )
     .join('\n')
 
+  const deliveryLines = [
+    `${ar ? 'الاسم' : 'Name'}: ${payload.customer.name.trim()}`,
+    `${ar ? 'الهاتف' : 'Phone'}: ${payload.customer.phone.trim()}`,
+    `${ar ? 'العنوان' : 'Address'}: ${payload.customer.address.trim()}`,
+  ]
   const notes = payload.customer.notes?.trim()
-    ? `\n${translate(locale, 'whatsapp.notes')}\n${payload.customer.notes.trim()}`
-    : ''
+  if (notes) {
+    deliveryLines.push('', `*${ar ? 'ملاحظات' : 'Notes'}*`, notes)
+  }
 
-  return `${translate(locale, 'whatsapp.orderGreeting')}
+  const subtotal = formatOrderAmount(payload.total, locale)
 
-${translate(locale, 'whatsapp.customerInfo')}
-${translate(locale, 'whatsapp.name')}: ${payload.customer.name}
-${translate(locale, 'whatsapp.phone')}: ${payload.customer.phone}
-${translate(locale, 'whatsapp.address')}: ${payload.customer.address}
-
-${translate(locale, 'whatsapp.products')}
-${productLines}
-
-${translate(locale, 'whatsapp.total')}: ${formatCurrency(payload.total, locale)}${notes}`
+  return [
+    ar
+      ? 'مرحباً مودرن هوم 👋\nأرغب في تأكيد الطلب التالي:'
+      : 'Hello Modern Home 👋\nI would like to confirm this order:',
+    `*${ar ? 'المنتجات' : 'Products'}*\n${productLines}`,
+    ar
+      ? `*إجمالي المنتجات: ${subtotal}*\nالتوصيل يُحدد حسب العنوان.`
+      : `*Products subtotal: ${subtotal}*\nDelivery is determined by the address.`,
+    `*${ar ? 'بيانات التوصيل' : 'Delivery details'}*\n${deliveryLines.join('\n')}`,
+    ar
+      ? 'يرجى تأكيد التوفر والتكلفة النهائية.'
+      : 'Please confirm availability and the final cost.',
+  ].join('\n\n')
 }
 
 export function buildWhatsAppUrl(message: string, phone = storeConfig.whatsapp): string {

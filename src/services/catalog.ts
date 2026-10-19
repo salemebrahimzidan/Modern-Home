@@ -75,6 +75,14 @@ export function filterAndSortProducts(
 ): Product[] {
   let result = [...allProducts]
 
+  if (filters.material) {
+    result = result.filter((product) =>
+      product.specifications?.some(
+        (spec) => spec.label.en === 'Material' && spec.value.en === filters.material,
+      ),
+    )
+  }
+
   if (filters.search?.trim()) {
     const q = filters.search.trim().toLowerCase()
     result = result.filter((product) => matchesSearch(product, q))

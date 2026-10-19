@@ -5,16 +5,29 @@ import Navbar from './Navbar'
 import { FloatingWhatsAppButton } from '../common/WhatsAppButton'
 import ToastViewport from '../common/ToastViewport'
 import { useLocale } from '../../hooks/useLocale'
+import { useCart } from '../../hooks/useCart'
+import { useEffect } from 'react'
 
 export default function MainLayout({ children }: { children: ReactNode }) {
-  const { t } = useLocale()
-  const { pathname } = useLocation()
-  const onePage = pathname === '/contact' || pathname === '/about'
+  const { t, locale } = useLocale()
+  const { getCartItemsCount } = useCart()
+  const { pathname, hash } = useLocation()
+  const onePage = false
+  useEffect(() => {
+    if (hash) {
+      requestAnimationFrame(() =>
+        document.getElementById(hash.slice(1))?.scrollIntoView(),
+      )
+    } else {
+      window.scrollTo(0, 0)
+    }
+  }, [pathname, hash])
 
   return (
     <div
       className={[
         'flex max-w-[100vw] flex-col overflow-x-clip',
+        pathname.startsWith('/products/') ? 'has-purchase-dock' : '',
         onePage ? 'h-svh overflow-hidden' : 'min-h-svh',
       ].join(' ')}
     >
@@ -24,15 +37,37 @@ export default function MainLayout({ children }: { children: ReactNode }) {
       >
         {t('common.skipToContent')}
       </a>
-      <Navbar />
+      <div className="sticky top-0 z-40">
+        <div className="store-announcement">
+          {locale === 'ar'
+            ? 'من أول وصفة… لآخر لمسة على السفرة. كل احتياجات مطبخك في مكان واحد'
+            : 'Thoughtful essentials for your kitchen. Order through WhatsApp.'}
+        </div>
+        <Navbar />
+      </div>
       <main
         id="main-content"
-        className={onePage ? 'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden' : 'min-w-0 flex-1'}
+        className={
+          onePage
+            ? 'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'
+            : 'min-w-0 flex-1'
+        }
       >
         {children}
       </main>
       <Footer />
       <FloatingWhatsAppButton />
+      {pathname !== '/cart' && !pathname.startsWith('/products/') && (
+        <nav
+          className="mobile-shopping-bar"
+          aria-label={locale === 'ar' ? 'التسوق السريع' : 'Quick shopping'}
+        >
+          <Link to="/products">{t('nav.products')}</Link>
+          <Link to="/cart">
+            {t('common.cart')} · {getCartItemsCount()} ←
+          </Link>
+        </nav>
+      )}
       <ToastViewport />
       <Link to="/cart" className="sr-only">
         {t('common.cart')}

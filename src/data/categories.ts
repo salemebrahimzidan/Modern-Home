@@ -43,7 +43,7 @@ export const categories: Category[] = [
     id: 4,
     name: L('تخزين وتنظيم', 'Storage & organization'),
     slug: 'kitchen-storage',
-    image: cover('photo-1588854337221-4cf9fa960bba'),
+    image: cover('photo-1556911220-e15b7b3490d8'),
     description: L(
       'علب حفظ، برطمانات توابل ومنظمات أدراج وثلاجة.',
       'Food containers, spice jars, and drawer and fridge organizers.',
