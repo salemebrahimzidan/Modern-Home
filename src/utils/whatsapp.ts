@@ -4,7 +4,7 @@ import type { Locale } from '../i18n/types'
 import { localized } from '../i18n/types'
 import type { OrderCustomer, OrderPayload } from '../types/order'
 import type { CartItem } from '../types/cart'
-import { formatCurrency } from './currency'
+import { formatCurrency, formatOrderAmount } from './currency'
 
 export function buildOrderPayload(
   customer: OrderCustomer,
@@ -21,11 +21,6 @@ export function buildOrderPayload(
   const total = lines.reduce((sum, line) => sum + line.lineTotal, 0)
 
   return { customer, items: lines, total }
-}
-
-function formatOrderAmount(amount: number, locale: Locale): string {
-  const formatted = amount.toLocaleString('en-US')
-  return `${formatted} ${localized(storeConfig.currencyLabel, locale)}`
 }
 
 export function buildWhatsAppOrderMessage(
@@ -65,6 +60,25 @@ export function buildWhatsAppOrderMessage(
       ? 'يرجى تأكيد التوفر والتكلفة النهائية.'
       : 'Please confirm availability and the final cost.',
   ].join('\n\n')
+}
+
+export function buildWhatsAppOrderFileMessage(
+  reference: string,
+  total: number,
+  locale: Locale = 'ar',
+): string {
+  const subtotal = formatOrderAmount(total, locale)
+  if (locale === 'ar') {
+    return `مرحباً مودرن هوم
+أرغب في تأكيد الطلب رقم: ${reference}
+إجمالي المنتجات: ${subtotal}
+سأرفق ملف الطلب للمراجعة.`
+  }
+
+  return `Hello Modern Home
+I would like to confirm order number: ${reference}
+Products subtotal: ${subtotal}
+I will attach the order file for review.`
 }
 
 export function buildWhatsAppUrl(message: string, phone = storeConfig.whatsapp): string {
