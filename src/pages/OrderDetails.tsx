@@ -1,17 +1,36 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Check, MapPin } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ClipboardList,
+  Clock,
+  MapPin,
+  Package,
+  Settings,
+  ShoppingCart,
+  Truck,
+  UserRound,
+  X,
+} from 'lucide-react'
 import Button from '../components/common/Button'
 import EmptyState from '../components/common/EmptyState'
 import Loading from '../components/common/Loading'
 import { useLocale } from '../hooks/useLocale'
 import type { Locale } from '../i18n/types'
 import type { TranslationKey } from '../i18n/translations'
-import { fetchOrder, submitVodafoneProof, type StoreOrder, type StoreOrderEvent } from '../services/orders'
+import { fetchOrder, submitVodafoneProof, type StoreOrder } from '../services/orders'
 import { formatCurrency } from '../utils/currency'
 import { isValidEgyptianPhone } from '../utils/validation'
 
-const TRACK_STEPS = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered'] as const
+const STEP_ICONS = {
+  pending: ClipboardList,
+  confirmed: Check,
+  preparing: Settings,
+  out_for_delivery: Truck,
+  delivered: Package,
+} as const
 
 function formatWhen(iso: string, locale: Locale) {
   return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-EG' : 'en-EG', {
@@ -22,35 +41,60 @@ function formatWhen(iso: string, locale: Locale) {
   }).format(new Date(iso))
 }
 
+function formatStamp(iso: string) {
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+  }).format(new Date(iso))
+}
+
 function formatCount(value: number, locale: Locale) {
   return new Intl.NumberFormat(locale === 'ar' ? 'ar-EG' : 'en-EG').format(value)
 }
 
 function statusTone(status: string) {
-  if (status === 'delivered') return 'bg-success/10 text-success'
-  if (status === 'cancelled') return 'bg-danger/10 text-danger'
-  if (status === 'pending') return 'bg-warn/15 text-warn'
-  return 'bg-accent-soft text-accent'
+  if (status === 'delivered') return 'bg-[#dcfce7] text-[#16a34a]'
+  if (status === 'out_for_delivery') return 'bg-[#ede9fe] text-[#7c3aed]'
+  if (status === 'preparing') return 'bg-[#ffedd5] text-[#ea580c]'
+  if (status === 'confirmed') return 'bg-[#dbeafe] text-[#2563eb]'
+  if (status === 'cancelled') return 'bg-[#ffe4e6] text-[#e11d48]'
+  return 'bg-[#eef2f6] text-[#667085]'
 }
 
 function paymentTone(status: string | null) {
-  if (status === 'paid') return 'bg-success/10 text-success'
-  if (status === 'rejected' || status === 'cancelled') return 'bg-danger/10 text-danger'
-  if (status === 'awaiting_verification') return 'bg-warn/15 text-warn'
-  return 'bg-mist text-ink'
+  if (status === 'paid') return 'bg-[#ecfdf3] text-[#16a34a]'
+  if (status === 'rejected') return 'bg-[#ffe4e6] text-[#e11d48]'
+  if (status === 'cancelled') return 'bg-[#f3f5f8] text-[#667085]'
+  if (status === 'pending' || status === 'awaiting_verification') return 'bg-[#fff7ed] text-[#b45309]'
+  return 'bg-[#eef2f6] text-[#344054]'
 }
 
-function stepMarkClass(step: string, reached: boolean, current: boolean, cancelled: boolean) {
-  const base = 'relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full border-2'
-  if (reached && !current) {
-    if (cancelled && step === 'cancelled') return `${base} border-danger bg-danger text-white`
-    return `${base} border-accent bg-accent text-white`
+function paymentNote(
+  order: StoreOrder,
+  t: (key: TranslationKey, vars?: Record<string, string | number>) => string,
+) {
+  if (order.paymentStatus === 'cancelled') return t('account.paymentCancelled')
+  if (order.paymentMethod === 'cod') {
+    return order.paymentStatus === 'paid' ? t('account.paidOnDelivery') : t('account.payOnDelivery')
   }
-  if (current) {
-    if (cancelled) return `${base} border-danger bg-paper text-danger`
-    return `${base} border-accent bg-paper text-accent`
-  }
-  return `${base} border-mist bg-paper text-mist`
+  if (order.paymentStatus === 'paid') return t('account.vodafonePaid')
+  if (order.paymentStatus === 'rejected') return t('account.vodafoneRejected')
+  if (order.paymentStatus === 'awaiting_verification') return t('account.vodafoneReviewing')
+  return t('account.vodafoneWaiting')
+}
+
+function EventIcon({ status }: { status: string }) {
+  const Icon = STEP_ICONS[status as keyof typeof STEP_ICONS] ?? (status === 'cancelled' ? X : ClipboardList)
+  return <Icon size={14} />
+}
+
+function InfoRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-3 text-sm">
+      <dt className="shrink-0 text-[#667085]">{label}</dt>
+      <dd className="text-end font-medium text-[#121826]">{children}</dd>
+    </div>
+  )
 }
 
 export default function OrderDetails() {
@@ -101,29 +145,13 @@ export default function OrderDetails() {
     return <EmptyState title={t('product.notFoundTitle')} actionLabel={t('account.orders')} actionTo="/account/orders" />
   }
 
-  const cancelled = order.status === 'cancelled'
-  const steps = cancelled
-    ? [...TRACK_STEPS.filter((step) => order.events.some((event) => event.toStatus === step)), 'cancelled']
-    : [...TRACK_STEPS]
-  const currentIndex = cancelled
-    ? steps.length - 1
-    : Math.max(TRACK_STEPS.indexOf(order.status as (typeof TRACK_STEPS)[number]), 0)
-  const eventByStatus = new Map<string, StoreOrderEvent>()
-  for (const event of order.events) eventByStatus.set(event.toStatus, event)
-  const stepViews = steps.map((step, index) => ({
-    step,
-    event: eventByStatus.get(step),
-    reached: index <= currentIndex,
-    current: index === currentIndex && step !== 'delivered',
-    isLast: index === steps.length - 1,
-    lineDone: index < currentIndex,
-  }))
   const paymentKey = order.paymentMethod === 'vodafone_cash' ? 'checkout.vodafone' : 'checkout.cod'
   const BackIcon = locale === 'ar' ? ArrowRight : ArrowLeft
-  const lineClass = cancelled ? 'bg-danger' : 'bg-accent'
+  const history = [...order.events].reverse()
+  const itemsTotal = order.items.reduce((sum, item) => sum + item.lineTotal, 0)
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
+    <section className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
       <Link to="/account/orders" className="inline-flex items-center gap-2 text-sm text-muted hover:text-accent">
         <BackIcon size={16} aria-hidden />
         {t('account.orders')}
@@ -143,6 +171,7 @@ export default function OrderDetails() {
           <div className="shrink-0 text-end">
             <p className="text-xs text-muted">{t('account.total')}</p>
             <p className="mt-1 font-display text-2xl text-ink">{formatCurrency(order.total, locale)}</p>
+            <p className="mt-1 max-w-44 text-[11px] leading-4 text-muted">{t('account.shippingNote')}</p>
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -150,128 +179,130 @@ export default function OrderDetails() {
             {t(`orderStatus.${order.status}` as TranslationKey)}
           </span>
           <span className={`rounded-full px-3 py-1 text-xs font-medium ${paymentTone(order.paymentStatus)}`}>
-            {t('account.payment')}:{' '}
-            {order.paymentStatus ? t(`paymentStatus.${order.paymentStatus}` as TranslationKey) : '—'}
+            {paymentNote(order, t)}
           </span>
         </div>
       </div>
 
-      <div className="mt-6 border border-mist bg-surface px-5 py-5 sm:px-6">
-        <h2 className="font-display text-xl text-ink">{t('account.progress')}</h2>
-        <ol
-          className="mt-6 hidden sm:grid"
-          style={{ gridTemplateColumns: `repeat(${stepViews.length}, minmax(0, 1fr))` }}
-          aria-label={t('account.progress')}
-        >
-          {stepViews.map((view) => (
-            <li key={view.step} className="min-w-0">
-              <div className="flex items-center">
-                <span className={stepMarkClass(view.step, view.reached, view.current, cancelled)}>
-                  {view.reached && !view.current ? (
-                    <Check size={14} strokeWidth={2.5} />
-                  ) : (
-                    <span className="size-2 rounded-full bg-current" />
-                  )}
-                </span>
-                {view.isLast ? null : (
-                  <span aria-hidden className={`mx-2 h-0.5 min-w-2 flex-1 ${view.lineDone ? lineClass : 'bg-mist'}`} />
-                )}
-              </div>
-              <p className={`mt-3 pe-3 text-xs leading-5 ${view.reached ? 'font-medium text-ink' : 'text-muted'}`}>
-                {t(`orderStatus.${view.step}` as TranslationKey)}
-              </p>
-              {view.event ? (
-                <time className="mt-1 block pe-3 text-[11px] leading-4 text-muted" dateTime={view.event.createdAt}>
-                  {formatWhen(view.event.createdAt, locale)}
-                </time>
-              ) : null}
-              {view.event?.message ? (
-                <p className="mt-1 pe-3 text-xs leading-5 text-muted">{view.event.message}</p>
-              ) : null}
-            </li>
-          ))}
-        </ol>
-
-        <ol className="mt-5 sm:hidden" aria-label={t('account.progress')}>
-          {stepViews.map((view) => (
-            <li key={view.step} className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-x-4">
-              <div className="relative flex justify-center">
-                {view.isLast ? null : (
-                  <span
-                    aria-hidden
-                    className={`absolute top-3.5 bottom-0 w-0.5 ${view.lineDone ? lineClass : 'bg-mist'}`}
-                  />
-                )}
-                <span className={stepMarkClass(view.step, view.reached, view.current, cancelled)}>
-                  {view.reached && !view.current ? (
-                    <Check size={14} strokeWidth={2.5} />
-                  ) : (
-                    <span className="size-2 rounded-full bg-current" />
-                  )}
-                </span>
-              </div>
-              <div className={view.isLast ? 'min-w-0' : 'min-w-0 pb-5'}>
-                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                  <p className={view.reached ? 'text-sm font-medium text-ink' : 'text-sm text-muted'}>
-                    {t(`orderStatus.${view.step}` as TranslationKey)}
-                  </p>
-                  {view.event ? (
-                    <time className="text-xs text-muted" dateTime={view.event.createdAt}>
-                      {formatWhen(view.event.createdAt, locale)}
-                    </time>
-                  ) : null}
+      <section className="mt-6 overflow-hidden rounded-2xl border border-[#e7ebf0] bg-white shadow-sm">
+        <div className="grid items-start lg:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="min-w-0 p-4 sm:p-5 lg:border-e lg:border-[#eef2f6]">
+            <div className="border-b border-[#eef2f6] pb-5">
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-[#c2410c]">
+                <UserRound size={16} aria-hidden />
+                {t('account.customer')}
+              </h2>
+              <dl className="mt-3 space-y-3">
+                <InfoRow label={t('account.name')}>{order.recipientName}</InfoRow>
+                <InfoRow label={t('auth.phone')}>
+                  <a href={`tel:${order.recipientPhone}`} className="text-[#c2410c]" dir="ltr">
+                    {order.recipientPhone}
+                  </a>
+                </InfoRow>
+                <div className="flex items-start justify-between gap-3 text-sm">
+                  <span className="inline-flex shrink-0 items-center gap-2 text-[#667085]">
+                    <MapPin size={15} className="text-[#ea580c]" aria-hidden />
+                    {t('account.address')}
+                  </span>
+                  <dd className="text-end font-medium text-[#121826]">
+                    {order.street}
+                    {locale === 'ar' ? '، ' : ', '}
+                    {order.city}
+                    {locale === 'ar' ? '، ' : ', '}
+                    {order.governorate}
+                  </dd>
                 </div>
-                {view.event?.message ? <p className="mt-1 text-sm leading-6 text-muted">{view.event.message}</p> : null}
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
+              </dl>
+            </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-5">
-        <div className="border border-mist bg-surface px-5 py-5 sm:col-span-3">
-          <h2 className="text-sm font-medium text-ink">{t('account.items')}</h2>
-          <ul className="mt-3 divide-y divide-mist">
-            {order.items.map((item) => {
-              const details = [item.color, item.size].filter(Boolean).join(' · ')
-              return (
-              <li key={item.id} className="flex items-start justify-between gap-4 py-3 first:pt-0">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-ink">{locale === 'ar' ? item.nameAr : item.nameEn}</p>
-                  {details ? <p className="mt-1 text-xs leading-5 text-muted">{details}</p> : null}
-                  <p className="mt-1 text-xs text-muted">
-                    {formatCount(item.quantity, locale)} × {formatCurrency(item.unitPrice, locale)}
-                  </p>
+            <div className="mt-5">
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-[#121826]">
+                <ShoppingCart size={16} aria-hidden />
+                {t('account.items')}
+              </h2>
+              <div className="mt-4 overflow-x-auto rounded-xl border border-[#e7ebf0]">
+                <table className="w-full min-w-[640px] border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-[#f3f5f8] text-xs text-[#667085]">
+                      <th className="px-4 py-3 text-start font-medium">{t('account.items')}</th>
+                      <th className="px-4 py-3 text-start font-medium">{t('product.size')}</th>
+                      <th className="px-4 py-3 text-start font-medium">{t('product.color')}</th>
+                      <th className="px-4 py-3 text-start font-medium">{t('account.piecePrice')}</th>
+                      <th className="px-4 py-3 text-start font-medium">{t('account.qty')}</th>
+                      <th className="px-4 py-3 text-start font-medium">{t('account.total')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {order.items.map((item, index) => (
+                      <tr key={item.id} className={index % 2 === 1 ? 'bg-[#f6f8fa]' : 'bg-white'}>
+                        <td className="px-4 py-3 font-medium text-[#121826]">
+                          {locale === 'ar' ? item.nameAr : item.nameEn}
+                        </td>
+                        <td className="px-4 py-3 text-[#344054]">{item.size || '—'}</td>
+                        <td className="px-4 py-3 text-[#344054]">{item.color || '—'}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-[#344054]">{formatCurrency(item.unitPrice, locale)}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-[#344054]">{formatCount(item.quantity, locale)}</td>
+                        <td className="whitespace-nowrap px-4 py-3 font-medium text-[#121826]">{formatCurrency(item.lineTotal, locale)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <dl className="ms-auto mt-3 w-full max-w-xs space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-6 text-[#344054]">
+                  <dt>{t('account.itemsTotal')}</dt>
+                  <dd className="font-medium text-[#121826]">{formatCurrency(itemsTotal, locale)}</dd>
                 </div>
-                <p className="shrink-0 text-sm font-medium text-ink">{formatCurrency(item.lineTotal, locale)}</p>
-              </li>
-              )
-            })}
-          </ul>
-          <div className="mt-1 flex items-center justify-between border-t border-mist pt-4">
-            <p className="text-sm text-muted">{t('account.total')}</p>
-            <p className="font-display text-lg text-ink">{formatCurrency(order.total, locale)}</p>
+                <div className="flex items-center justify-between gap-6 text-[#344054]">
+                  <dt>{t('account.shipping')}</dt>
+                  <dd className="text-end text-xs text-[#667085]">{t('account.shippingBy')}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-6 rounded-xl bg-[#f0fdf4] px-3 py-2 text-base font-semibold text-[#15803d]">
+                  <dt>{t('account.total')}</dt>
+                  <dd>{formatCurrency(order.total, locale)}</dd>
+                </div>
+              </dl>
+            </div>
           </div>
-        </div>
 
-        <div className="border border-mist bg-surface px-5 py-5 sm:col-span-2">
-          <h2 className="flex items-center gap-2 text-sm font-medium text-ink">
-            <MapPin size={16} aria-hidden />
-            {t('account.address')}
-          </h2>
-          <p className="mt-3 text-sm font-medium text-ink">{order.recipientName}</p>
-          <p className="mt-1 text-sm text-muted" dir="ltr">
-            {order.recipientPhone}
-          </p>
-          <p className="mt-3 text-sm leading-6 text-muted">
-            {order.street}
-            <br />
-            {order.city}
-            {locale === 'ar' ? '، ' : ', '}
-            {order.governorate}
-          </p>
+          <aside className="border-t border-[#eef2f6] lg:border-t-0">
+            <h2 className="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-[#c2410c]">
+              <Clock size={16} aria-hidden />
+              {t('account.history')}
+            </h2>
+            {history.length === 0 ? (
+              <p className="px-4 pb-4 text-sm text-muted">{t('account.empty')}</p>
+            ) : (
+              <ol className="px-4 pb-4" aria-label={t('account.history')}>
+                {history.map((event, index) => {
+                  const stamp = formatStamp(event.createdAt)
+                  const detailKey = `orderEvent.${event.toStatus}` as TranslationKey
+                  const detail = event.message || t(detailKey)
+                  return (
+                    <li key={event.id} className="relative flex items-start gap-3 pb-4 last:pb-0">
+                      <span className={`relative z-10 grid size-7 shrink-0 place-items-center rounded-full ${statusTone(event.toStatus)}`}>
+                        <EventIcon status={event.toStatus} />
+                      </span>
+                      {index < history.length - 1 ? (
+                        <span aria-hidden className="absolute top-7 bottom-0 start-3.5 w-px bg-[#ffedd5]" />
+                      ) : null}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-[#121826]">
+                          {t(`orderStatus.${event.toStatus}` as TranslationKey)}
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-[#667085]">{detail}</p>
+                      </div>
+                      <time className="shrink-0 text-end text-[11px] leading-4 text-[#667085]" dateTime={event.createdAt} dir="ltr">
+                        {stamp}
+                      </time>
+                    </li>
+                  )
+                })}
+              </ol>
+            )}
+          </aside>
         </div>
-      </div>
+      </section>
 
       {order.paymentMethod === 'vodafone_cash' && order.paymentStatus === 'awaiting_verification' ? (
         <form className="mt-4 space-y-3 border border-mist bg-surface px-5 py-5" onSubmit={(event) => void sendProof(event)}>

@@ -3,31 +3,17 @@
 -- the variant has no override. Stock is taken from the selected variant.
 -- The arguments contain no prices, stock figures, or payment approvals.
 
+CREATE SEQUENCE public.order_reference_seq AS bigint;
+
+REVOKE ALL ON SEQUENCE public.order_reference_seq FROM PUBLIC, anon, authenticated;
+
 CREATE FUNCTION public.generate_order_reference()
 RETURNS text
-LANGUAGE plpgsql
+LANGUAGE sql
 VOLATILE
 SET search_path = public
 AS $$
-DECLARE
-  alphabet constant text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  hex text := replace(pg_catalog.gen_random_uuid()::text, '-', '');
-  suffix text := '';
-  index integer;
-BEGIN
-  FOR index IN 0..3 LOOP
-    suffix := suffix || substr(
-      alphabet,
-      (pg_catalog.ascii(substr(hex, index + 1, 1)) % char_length(alphabet)) + 1,
-      1
-    );
-  END LOOP;
-
-  RETURN 'MH-'
-    || pg_catalog.to_char(pg_catalog.now() AT TIME ZONE 'Africa/Cairo', 'YYMMDD')
-    || '-'
-    || suffix;
-END;
+  SELECT 'MH-' || pg_catalog.lpad(pg_catalog.nextval('public.order_reference_seq')::text, 6, '0');
 $$;
 
 CREATE FUNCTION public.checkout_order(

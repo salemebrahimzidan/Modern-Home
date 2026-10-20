@@ -38,11 +38,6 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         {t('common.skipToContent')}
       </a>
       <div className="sticky top-0 z-40">
-        <div className="store-announcement">
-          {locale === 'ar'
-            ? 'من أول وصفة… لآخر لمسة على السفرة. كل احتياجات مطبخك في مكان واحد'
-            : 'Thoughtful essentials for your kitchen. Order through WhatsApp.'}
-        </div>
         <Navbar />
       </div>
       <main

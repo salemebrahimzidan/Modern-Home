@@ -28,6 +28,7 @@ interface CategoryRow {
 interface ImageRow {
   id: string
   image_url: string
+  alt_ar: string | null
   is_primary: boolean
   sort_order: number
 }
@@ -114,6 +115,7 @@ function mapProduct(row: ProductRow): Product {
     url: image.image_url,
     primary: image.is_primary,
     sortOrder: image.sort_order,
+    color: image.alt_ar?.trim() ?? '',
   }))
   const readyUrls = gallery
     .map((image) => image.url)
@@ -171,7 +173,7 @@ const productSelect = `
   id, category_id, slug, name_ar, name_en, description_ar, description_en,
   price_egp, compare_at_price_egp, is_featured, is_visible, is_new, is_best_seller,
   rating, reviews_count, created_at,
-  product_images ( id, image_url, is_primary, sort_order ),
+  product_images ( id, image_url, alt_ar, is_primary, sort_order ),
   product_specifications ( label_ar, label_en, value_ar, value_en, sort_order ),
   product_variants ( id, color, size, sku, price_egp, stock_quantity, is_active )
 `

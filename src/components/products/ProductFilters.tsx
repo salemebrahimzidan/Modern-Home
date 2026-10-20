@@ -1,15 +1,118 @@
-import { ChevronDown, RotateCcw } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Check, ChevronDown, RotateCcw } from 'lucide-react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useLocale } from '../../hooks/useLocale'
 import { localized } from '../../i18n/types'
-import type { LocalizedText } from '../../i18n/types'
 import type { Category } from '../../types/category'
 import type { ProductSortOption } from '../../types/product'
 
+function FilterSelect({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string
+  value: string
+  options: Array<{ value: string; label: string }>
+  onChange: (value: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLUListElement>(null)
+  const menuId = useId()
+  const selected = options.find((option) => option.value === value) ?? options[0]
+
+  useEffect(() => {
+    if (!open) return
+    const selectedOption = menuRef.current?.querySelector<HTMLButtonElement>('[aria-selected="true"]')
+    selectedOption?.focus()
+
+    function onPointerDown(event: PointerEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setOpen(false)
+        triggerRef.current?.focus()
+      }
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  function moveFocus(direction: 1 | -1) {
+    const buttons = [...(menuRef.current?.querySelectorAll('button') ?? [])]
+    const index = buttons.indexOf(document.activeElement as HTMLButtonElement)
+    const next = buttons[index + direction] ?? buttons[direction === 1 ? 0 : buttons.length - 1]
+    next?.focus()
+  }
+
+  return (
+    <div ref={rootRef} className="catalog-select">
+      <span>{label}</span>
+      <button
+        ref={triggerRef}
+        type="button"
+        className="catalog-select-trigger"
+        aria-label={label}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={menuId}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span>{selected?.label}</span>
+        <ChevronDown size={16} className={open ? 'is-open' : undefined} />
+      </button>
+      {open ? (
+        <ul
+          ref={menuRef}
+          id={menuId}
+          role="listbox"
+          aria-label={label}
+          className="catalog-select-menu"
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowDown') {
+              event.preventDefault()
+              moveFocus(1)
+            } else if (event.key === 'ArrowUp') {
+              event.preventDefault()
+              moveFocus(-1)
+            }
+          }}
+        >
+          {options.map((option) => {
+            const isSelected = option.value === value
+            return (
+              <li key={option.value || 'all'} role="none">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  className={isSelected ? 'is-selected' : undefined}
+                  onClick={() => {
+                    onChange(option.value)
+                    setOpen(false)
+                    triggerRef.current?.focus()
+                  }}
+                >
+                  <span>{option.label}</span>
+                  {isSelected ? <Check size={14} /> : null}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      ) : null}
+    </div>
+  )
+}
+
 interface ProductFiltersProps {
-  materials: LocalizedText[]
-  material: string
-  onMaterialChange: (value: string) => void
   categories: Category[]
   categorySlug: string
   sort: ProductSortOption
@@ -23,9 +126,6 @@ interface ProductFiltersProps {
 }
 
 export default function ProductFilters({
-  materials,
-  material,
-  onMaterialChange,
   categories,
   categorySlug,
   sort,
@@ -52,43 +152,24 @@ export default function ProductFilters({
   )
 
   const hasActiveFilters = Boolean(
-    material || categorySlug || minPrice || maxPrice || (sort !== 'newest' && sort !== 'featured'),
+    categorySlug || minPrice || maxPrice || (sort !== 'newest' && sort !== 'featured'),
   )
 
   const panel = (
     <div id="product-filters-panel" className="catalog-filter-panel">
-      <div className="catalog-categories" role="group" aria-label={t('common.category')}>
-        <button
-          type="button"
-          className={!categorySlug ? 'is-active' : undefined}
-          onClick={() => onCategoryChange('')}
-        >
-          {t('common.all')}
-        </button>
-        {categories.map((category) => (
-          <button
-            key={category.id}
-            type="button"
-            className={categorySlug === category.slug ? 'is-active' : undefined}
-            onClick={() => onCategoryChange(category.slug)}
-          >
-            {localized(category.name, locale)}
-          </button>
-        ))}
-      </div>
-
       <div className="catalog-filter-grid">
-        <label>
-          {locale === 'ar' ? 'الخامة' : 'Material'}
-          <select value={material} onChange={(event) => onMaterialChange(event.target.value)}>
-            <option value="">{locale === 'ar' ? 'كل الخامات' : 'All materials'}</option>
-            {materials.map((item) => (
-              <option key={item.en} value={item.en}>
-                {localized(item, locale)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <FilterSelect
+          label={t('common.category')}
+          value={categorySlug}
+          onChange={onCategoryChange}
+          options={[
+            { value: '', label: locale === 'ar' ? 'كل الأقسام' : 'All categories' },
+            ...categories.map((category) => ({
+              value: category.slug,
+              label: localized(category.name, locale),
+            })),
+          ]}
+        />
         <label>
           {t('common.minPrice')}
           <input
@@ -111,19 +192,12 @@ export default function ProductFilters({
             placeholder={t('common.to')}
           />
         </label>
-        <label>
-          {t('common.sort')}
-          <select
-            value={sort}
-            onChange={(event) => onSortChange(event.target.value as ProductSortOption)}
-          >
-            {sortOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <FilterSelect
+          label={t('common.sort')}
+          value={sort}
+          onChange={(value) => onSortChange(value as ProductSortOption)}
+          options={sortOptions}
+        />
       </div>
     </div>
   )

@@ -1,10 +1,9 @@
 import { storeConfig } from '../config/store'
-import { translate } from '../i18n/translate'
 import type { Locale } from '../i18n/types'
 import { localized } from '../i18n/types'
 import type { OrderCustomer, OrderPayload } from '../types/order'
 import type { CartItem } from '../types/cart'
-import { formatCurrency, formatOrderAmount } from './currency'
+import { formatOrderAmount } from './currency'
 
 export function buildOrderPayload(
   customer: OrderCustomer,
@@ -93,14 +92,4 @@ export function openWhatsApp(message: string, phone = storeConfig.whatsapp): voi
 export function openWhatsAppChat(phone = storeConfig.whatsapp): void {
   const digits = phone.replace(/\D/g, '')
   window.open(`https://wa.me/${digits}`, '_blank', 'noopener,noreferrer')
-}
-
-export function buildProductInquiryMessage(
-  productName: string,
-  price: number,
-  locale: Locale = 'ar',
-): string {
-  return `${translate(locale, 'whatsapp.inquiry')}
-${productName}
-${translate(locale, 'whatsapp.price')}: ${formatCurrency(price, locale)}`
 }
