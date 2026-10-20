@@ -1,10 +1,14 @@
 -- Modern Home product image storage.
--- Private bucket. Visitors can read an object only when its product and category
--- are visible. Admins can upload and delete. The Storage API also rejects files
--- that are not WebP or are larger than 2 MB. The dashboard converts JPG, PNG,
--- and WebP uploads to WebP before sending them.
--- Apply this file in the Supabase SQL Editor after the five catalog migrations.
--- Do not run it from the storefront.
+-- Private bucket "product-images". Storefront visitors can read an object only
+-- when that exact path is a gallery row for a visible product in a visible
+-- category. Admins can read, upload, and delete every object in the bucket.
+-- The Storage API rejects files that are not WebP or are larger than 2 MB.
+-- The admin converts JPG, PNG, and WebP to WebP and stores
+-- {product_id}/{image_id}.webp.
+--
+-- Safe to run once in the Supabase SQL Editor. It does not delete storage
+-- objects, product rows, or gallery rows. Re-running replaces only these
+-- policies and the path check.
 
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
@@ -13,12 +17,17 @@ VALUES (
   false,
   2000000,
   ARRAY['image/webp']::text[]
-);
+)
+ON CONFLICT (id) DO UPDATE
+SET
+  public = false,
+  file_size_limit = 2000000,
+  allowed_mime_types = ARRAY['image/webp']::text[];
 
 COMMENT ON TABLE public.product_images IS
   'Gallery rows. image_url is either a legacy https URL or a product-images object path: {product_id}/{image_id}.webp.';
 
-CREATE FUNCTION public.enforce_product_image_location()
+CREATE OR REPLACE FUNCTION public.enforce_product_image_location()
 RETURNS trigger
 LANGUAGE plpgsql
 SET search_path = public
@@ -47,6 +56,7 @@ $$;
 COMMENT ON FUNCTION public.enforce_product_image_location() IS
   'Keeps a new gallery row on a storage path inside its own product folder, or on an existing https URL.';
 
+DROP TRIGGER IF EXISTS product_images_location ON public.product_images;
 CREATE TRIGGER product_images_location
   BEFORE INSERT OR UPDATE OF image_url, product_id ON public.product_images
   FOR EACH ROW
@@ -54,6 +64,7 @@ CREATE TRIGGER product_images_location
 
 REVOKE ALL ON FUNCTION public.enforce_product_image_location() FROM PUBLIC, anon, authenticated, service_role;
 
+DROP POLICY IF EXISTS product_images_storage_select ON storage.objects;
 CREATE POLICY product_images_storage_select
   ON storage.objects
   FOR SELECT
@@ -64,15 +75,17 @@ CREATE POLICY product_images_storage_select
       public.is_admin()
       OR EXISTS (
         SELECT 1
-        FROM public.products AS product
+        FROM public.product_images AS image
+        JOIN public.products AS product ON product.id = image.product_id
         JOIN public.categories AS category ON category.id = product.category_id
-        WHERE product.id::text = (storage.foldername(name))[1]
+        WHERE image.image_url = storage.objects.name
           AND product.is_visible
           AND category.is_visible
       )
     )
   );
 
+DROP POLICY IF EXISTS product_images_storage_insert ON storage.objects;
 CREATE POLICY product_images_storage_insert
   ON storage.objects
   FOR INSERT
@@ -97,6 +110,7 @@ CREATE POLICY product_images_storage_insert
     )
   );
 
+DROP POLICY IF EXISTS product_images_storage_delete ON storage.objects;
 CREATE POLICY product_images_storage_delete
   ON storage.objects
   FOR DELETE

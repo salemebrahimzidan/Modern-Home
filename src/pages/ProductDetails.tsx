@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import EmptyState from '../components/common/EmptyState'
 import Button from '../components/common/Button'
-import WhatsAppIcon from '../components/common/WhatsAppIcon'
 import Loading from '../components/common/Loading'
 import ProductGallery from '../components/products/ProductGallery'
 import ProductGrid from '../components/products/ProductGrid'
@@ -12,10 +11,10 @@ import { useCart } from '../hooks/useCart'
 import { useLocale } from '../hooks/useLocale'
 import { usePageSeo } from '../hooks/usePageSeo'
 import { localized } from '../i18n/types'
+import type { ProductImage } from '../types/product'
 import { activeVariants, getCategoryName, getRelatedProducts, variantUnitPrice } from '../services/catalog'
 import { formatCurrency } from '../utils/currency'
 import { getProductDiscount } from '../utils/product'
-import { buildProductInquiryMessage, openWhatsApp } from '../utils/whatsapp'
 
 export default function ProductDetails() {
   const { slug } = useParams()
@@ -88,7 +87,7 @@ export default function ProductDetails() {
 
       <div className="grid gap-10 lg:grid-cols-2">
         <div>
-          <ProductGallery images={product.images} alt={productName!} />
+          <ProductGallery key={color} images={imagesForColor(product.gallery, color)} alt={productName!} />
           <p className="mt-3 text-xs text-muted">{t('product.photoNote')}</p>
         </div>
 
@@ -198,15 +197,6 @@ export default function ProductDetails() {
               <ShoppingCart size={18} />
               {t('common.addToCartLong')}
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="min-w-0 flex-1"
-              onClick={() => openWhatsApp(buildProductInquiryMessage(productName!, unitPrice, locale))}
-            >
-              <WhatsAppIcon size={18} />
-              {t('product.buyWhatsapp')}
-            </Button>
           </div>
 
           {specEntries.length > 0 ? (
@@ -236,4 +226,13 @@ export default function ProductDetails() {
       ) : null}
     </section>
   )
+}
+
+function imagesForColor(gallery: ProductImage[], color: string): string[] {
+  const images = gallery.filter((image) => image.url)
+  if (!images.some((image) => image.color)) return images.map((image) => image.url)
+  const matched = images.filter((image) => image.color === color)
+  const shared = images.filter((image) => !image.color)
+  const visible = matched.length > 0 ? [...matched, ...shared] : shared.length > 0 ? shared : images
+  return visible.map((image) => image.url)
 }

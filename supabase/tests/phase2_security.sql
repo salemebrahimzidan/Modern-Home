@@ -495,7 +495,7 @@ SELECT test.assert(
 SELECT test.assert((SELECT count(*) = 0 FROM public.cart_items), 'checkout clears the customer cart');
 SELECT test.assert(
   (
-    SELECT reference ~ '^MH-[0-9]{6}-[A-Z2-9]{4}$'
+    SELECT reference ~ '^MH-[0-9]{6}$'
       AND currency = 'EGP'
       AND subtotal_egp = 100.00
       AND shipping_egp = 0

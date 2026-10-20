@@ -4,29 +4,6 @@ import { openWhatsAppChat } from '../../utils/whatsapp'
 export default function ShoppingGuide({ faqOnly = false }: { faqOnly?: boolean }) {
   const { locale } = useLocale()
   const ar = locale === 'ar'
-  const steps = ar
-    ? [
-        ['اختار اللي يناسبك', 'تصفح الأقسام والخامات والمقاسات، وأضف اختياراتك للسلة.'],
-        ['أكد الطلب من السلة', 'سجّل الدخول، أدخل عنوان التوصيل، واختر الدفع عند الاستلام أو فودافون كاش.'],
-        [
-          'أكد التفاصيل مع المتجر',
-          'تأكد من التوفر والسعر وتكلفة التوصيل وطريقة الدفع قبل الشراء.',
-        ],
-      ]
-    : [
-        [
-          'Find your everyday essentials',
-          'Explore categories, materials and sizes, then add your choices to the cart.',
-        ],
-        [
-          'Place the order from your cart',
-          'Sign in, enter the delivery address, then choose cash on delivery or Vodafone Cash.',
-        ],
-        [
-          'Confirm with the store',
-          'Confirm availability, prices, delivery and payment before completing your purchase.',
-        ],
-      ]
   const questions = ar
     ? [
         [
@@ -76,19 +53,6 @@ export default function ShoppingGuide({ faqOnly = false }: { faqOnly?: boolean }
     <>
       {!faqOnly && (
         <>
-        <section className="guide-section">
-          <p className="eyebrow">{ar ? 'بخطوات بسيطة' : 'A simpler way to shop'}</p>
-          <h2>{ar ? 'من اختيارك… لباب بيتك.' : 'From your wishlist to your home.'}</h2>
-          <div className="guide-steps">
-            {steps.map(([title, body], i) => (
-              <div key={title}>
-                <span>0{i + 1}</span>
-                <h3>{title}</h3>
-                <p>{body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
         <section className="editorial-story">
           <img
             src="https://images.unsplash.com/photo-1610701596007-11502861dcfa?auto=format&fit=crop&w=1400&q=85"

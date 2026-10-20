@@ -13,6 +13,8 @@ export interface ProductImage {
   url: string
   primary: boolean
   sortOrder: number
+  /** Empty when the photo is shown for every color. */
+  color: string
 }
 
 export interface ProductVariant {

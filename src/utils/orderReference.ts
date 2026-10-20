@@ -1,12 +1,8 @@
-export function createOrderReference(date = new Date()): string {
-  const year = String(date.getFullYear()).slice(2)
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  const bytes = crypto.getRandomValues(new Uint8Array(4))
-  let suffix = ''
-  for (const byte of bytes) suffix += alphabet[byte % alphabet.length]
-  return `MH-${year}${month}${day}-${suffix}`
+export function formatOrderReference(sequence: number): string {
+  if (!Number.isInteger(sequence) || sequence < 1) {
+    throw new Error('Order number is out of range.')
+  }
+  return `MH-${String(sequence).padStart(6, '0')}`
 }
 
 export function formatOrderDate(date: Date, locale: 'ar' | 'en'): string {

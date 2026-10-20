@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { useCatalog } from '../../context/CatalogContext'
 import { useLocale } from '../../hooks/useLocale'
 import { ProductCardSkeleton } from '../common/Loading'
@@ -32,7 +31,6 @@ interface CatalogBrowserProps {
 }
 
 export default function CatalogBrowser({
-  sourceProducts,
   visibleProducts,
   loading = false,
   query,
@@ -47,19 +45,6 @@ export default function CatalogBrowser({
 }: CatalogBrowserProps) {
   const { t } = useLocale()
   const { categories } = useCatalog()
-  const materials = useMemo(
-    () =>
-      Array.from(
-        new Map(
-          sourceProducts.flatMap((product) =>
-            (product.specifications ?? [])
-              .filter((spec) => spec.label.en === 'Material')
-              .map((spec) => [spec.value.en, spec.value] as const),
-          ),
-        ).values(),
-      ),
-    [sourceProducts],
-  )
 
   return (
     <div id={anchorId}>
@@ -73,9 +58,6 @@ export default function CatalogBrowser({
 
       <ProductSearch value={query.search} onChange={(value) => onChange('search', value)} />
       <ProductFilters
-        materials={materials}
-        material={query.material}
-        onMaterialChange={(value) => onChange('material', value)}
         categories={categories}
         categorySlug={query.categorySlug}
         sort={query.sort}

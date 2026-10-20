@@ -68,7 +68,7 @@ export default function Orders() {
           icon={<Package size={28} aria-hidden />}
         />
       ) : (
-        <ul className="mt-6 flex flex-col gap-4">
+        <ul className="mt-6 divide-y divide-mist border border-mist bg-surface">
           {orders.map((order) => (
             <OrderCard key={order.id} order={order} locale={locale} t={t} />
           ))}
@@ -87,55 +87,33 @@ function OrderCard({
   locale: Locale
   t: (key: TranslationKey, vars?: Record<string, string | number>) => string
 }) {
-  const quantity = order.items.reduce((sum, item) => sum + item.quantity, 0)
-  const names = order.items
-    .slice(0, 2)
-    .map((item) => {
-      const name = locale === 'ar' ? item.nameAr : item.nameEn
-      return name ? `${formatCount(item.quantity, locale)} × ${name}` : ''
-    })
-    .filter(Boolean)
-  const extra = order.items.length - names.length
-  const paymentKey = order.paymentMethod === 'vodafone_cash' ? 'checkout.vodafone' : 'checkout.cod'
+  const first = order.items[0]
+  const firstName = first ? (locale === 'ar' ? first.nameAr : first.nameEn) : ''
+  const extra = Math.max(order.items.length - 1, 0)
 
   return (
     <li>
       <Link
         to={`/account/orders/${order.id}`}
-        className="group block border border-mist bg-surface px-5 py-5 transition-colors hover:border-accent sm:px-6"
+        className="group flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-accent-soft sm:gap-4 sm:px-5"
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs text-muted">{t('account.reference')}</p>
-            <p className="mt-1 font-display text-xl text-ink">{order.reference}</p>
-          </div>
-          <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusTone(order.status)}`}>
-            {t(`orderStatus.${order.status}` as TranslationKey)}
-          </span>
-        </div>
-
-        {names.length > 0 ? (
-          <p className="mt-4 text-sm leading-6 text-ink">
-            {names.join(locale === 'ar' ? '، ' : ', ')}
-            {extra > 0 ? ` +${extra}` : ''}
-          </p>
-        ) : null}
-
-        <div className="mt-5 flex items-center justify-between gap-4 border-t border-mist pt-4">
-          <p className="min-w-0 text-xs leading-5 text-muted">
-            <time dateTime={order.createdAt}>{formatWhen(order.createdAt, locale)}</time>
-            {' · '}
-            {t(paymentKey)}
-            {' · '}
-            {t('common.productCount', { count: formatCount(quantity, locale) })}
-          </p>
-          <span className="flex shrink-0 items-center gap-3">
-            <span className="font-display text-lg text-ink">{formatCurrency(order.total, locale)}</span>
-            <span className="text-accent">
-              <DirectionalArrow size={16} />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <p className="font-display text-base text-ink">{order.reference}</p>
+            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${statusTone(order.status)}`}>
+              {t(`orderStatus.${order.status}` as TranslationKey)}
             </span>
-          </span>
+          </div>
+          <p className="mt-1 truncate text-xs text-muted">
+            <time dateTime={order.createdAt}>{formatWhen(order.createdAt, locale)}</time>
+            {first && firstName ? ` · ${formatCount(first.quantity, locale)} × ${firstName}` : ''}
+            {extra > 0 ? ` +${formatCount(extra, locale)}` : ''}
+          </p>
         </div>
+        <span className="shrink-0 text-sm font-medium text-ink">{formatCurrency(order.total, locale)}</span>
+        <span className="shrink-0 text-muted transition-colors group-hover:text-accent">
+          <DirectionalArrow size={16} />
+        </span>
       </Link>
     </li>
   )

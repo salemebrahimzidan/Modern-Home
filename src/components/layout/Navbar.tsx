@@ -27,6 +27,7 @@ export default function Navbar() {
     () => [
       { to: '/', label: t('nav.home') },
       { to: '/products', label: t('nav.products') },
+      { to: '/account/orders', label: t('account.orders') },
       { to: '/categories', label: t('nav.categories') },
       { to: '/offers', label: t('nav.offers') },
       { to: '/about', label: t('nav.about') },
@@ -77,7 +78,7 @@ export default function Navbar() {
             <NavLink
               key={link.to}
               to={link.to}
-              end={link.to === '/'}
+              end={link.to === '/' || link.to === '/account/orders'}
               className={({ isActive }) =>
                 isActive ? 'font-semibold text-accent' : 'text-muted hover:text-ink'
               }

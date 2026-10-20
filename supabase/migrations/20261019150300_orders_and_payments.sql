@@ -31,7 +31,7 @@ CREATE TABLE public.orders (
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT orders_reference_unique UNIQUE (reference),
   CONSTRAINT orders_user_idempotency_unique UNIQUE (user_id, idempotency_key),
-  CONSTRAINT orders_reference_format CHECK (reference ~ '^MH-[0-9]{6}-[A-Z2-9]{4}$'),
+  CONSTRAINT orders_reference_format CHECK (reference ~ '^MH-[0-9]{6}$'),
   CONSTRAINT orders_currency_egp CHECK (currency = 'EGP'),
   CONSTRAINT orders_subtotal_nonnegative CHECK (subtotal_egp >= 0),
   CONSTRAINT orders_shipping_nonnegative CHECK (shipping_egp >= 0),

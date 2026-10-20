@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { useLocale } from '../../hooks/useLocale'
 
@@ -17,11 +17,8 @@ export default function ProductSearch({ value, onChange, onSubmit }: ProductSear
   }
 
   return (
-    <form onSubmit={handleSubmit} className="relative">
-      <Search
-        size={18}
-        className="pointer-events-none absolute top-1/2 start-3.5 -translate-y-1/2 text-accent"
-      />
+    <form onSubmit={handleSubmit} className="catalog-search-form" role="search">
+      <Search size={18} className="catalog-search-icon" aria-hidden="true" />
       <input
         type="search"
         value={value}
@@ -30,6 +27,16 @@ export default function ProductSearch({ value, onChange, onSubmit }: ProductSear
         aria-label={t('common.searchProducts')}
         className="catalog-search"
       />
+      {value ? (
+        <button
+          type="button"
+          className="catalog-search-clear"
+          aria-label={t('common.clearSearch')}
+          onClick={() => onChange('')}
+        >
+          <X size={16} />
+        </button>
+      ) : null}
     </form>
   )
 }

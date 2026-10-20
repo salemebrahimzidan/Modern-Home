@@ -52,11 +52,11 @@ export default function MobileMenu({ open, links, onClose }: MobileMenuProps) {
           </button>
         </div>
         <nav aria-label={t('nav.mobileAria')}>
-          {[...links, { to: '/account/orders', label: t('account.orders') }].map((link) => (
+          {links.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
-              end={link.to === '/'}
+              end={link.to === '/' || link.to === '/account/orders'}
               onClick={onClose}
               className={({ isActive }) => (isActive ? 'is-active' : undefined)}
             >

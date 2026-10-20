@@ -49,11 +49,6 @@ export default function Footer() {
         <span>
           © {new Date().getFullYear()} {storeConfig.name}. {t('footer.rights')}
         </span>
-        <span>
-          {ar
-            ? 'صور توضيحية. تُؤكد المواصفات والتوفر قبل الشراء.'
-            : 'Illustrative photos. Confirm specifications and availability before purchase.'}
-        </span>
       </div>
     </footer>
   )
